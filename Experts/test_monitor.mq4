@@ -69,6 +69,26 @@ void OnTick()
       RefreshRates();
       Work();
       Sleep(UpdateMilliSecondsExpert);
+      /*
+      MqlDateTime time; TimeCurrent(time);
+      string symbol = Symbol();
+      datetime date_from[3], date_to[3];
+      bool result = true; int i = 0; string Log;
+      for (int i = 0; i < 3; i++)
+      {
+         result = SymbolInfoSessionQuote(symbol, time.day_of_week, i, date_from[i], date_to[i]);
+         Log += "i = " + i + "\n";
+         Log += "date from: " + TimeToString(date_from[i], TIME_SECONDS) + " sec. \n";
+         Log += "date to: " + TimeToString(date_to[i], TIME_SECONDS) + " sec. \n";
+      }
+      datetime date_start = SymbolInfoInteger(symbol, SYMBOL_START_TIME);
+      datetime date_end = SymbolInfoInteger(symbol, SYMBOL_EXPIRATION_TIME);
+      double market = MarketInfo(symbol, MODE_TRADEALLOWED);
+      Log += "date start: " + TimeToString(date_start) + " \n";
+      Log += "date end: " + TimeToString(date_end) + " \n";
+      Log += market;
+      Comment(Log);
+      */
    }
 }
 //+------------------------------------------------------------------+
@@ -114,7 +134,9 @@ void Deinit()
 
 void Work()
 {
-   Client.UpdateMonitors();
+   string Log;
+   Client.UpdateMonitors(Log);
+   Comment(Log);
 }
 
 void AddMonitor()
