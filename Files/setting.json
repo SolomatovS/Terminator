@@ -8,12 +8,12 @@
           "Enabler": true,
           "Filters": {
             "MinPointsDeviation": {
-              "Enabler": false,
-              "DeviationBuy": 0.00006,
-              "DeviationSell": 0.00006
+              "Enabler": true,
+              "DeviationBuy": 0.00001,
+              "DeviationSell": 0.00001
             },
             "MinSpreadsDeviation": {
-              "Enabler": true,
+              "Enabler": false,
               "DeviationBuy": 3,
               "DeviationSell": 3
             }
