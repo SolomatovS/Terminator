@@ -1,0 +1,75 @@
+{
+  "UpdateMilliSecondsExpert": 100,
+  "Defaults": {
+    "Monitor": {
+      "Prefix": "Local",
+      "Managers": {
+        "StopQuotesNotificator": {
+          "Enabler": true,
+          "Filters": {
+            "MinPointsDeviation": {
+              "Enabler": false,
+              "DeviationBuy": 0.00006,
+              "DeviationSell": 0.00006
+            },
+            "MinSpreadsDeviation": {
+              "Enabler": true,
+              "DeviationBuy": 3,
+              "DeviationSell": 3
+            }
+          },
+          "Notifications": {
+            "Alert": {
+              "Enabler": true,
+              "CountLimit": 1,
+              "ResetCountMinute": 1.0
+            },
+            "Email": {
+              "Enabler": false,
+              "CountLimit": 1,
+              "ResetCountMinute": 1.0,
+              "Header": "Уведомление"
+            },
+            "Push": {
+              "Enabler": false,
+              "CountLimit": 1,
+              "ResetCountMinute": 1.0
+            }
+          },
+          "TimeOut": {
+            "Enabler": true,
+            "TimeOutSeconds": 20.0
+          }
+        }
+      },
+      "SymbolMemory": "Default",
+      "SymbolTerminal": "Default"
+    }
+  },
+  "Monitors": [
+    {
+      "SymbolTerminal": "EURUSDi",
+      "SymbolMemory":   "EURUSD"
+    },
+    {
+      "SymbolTerminal": "GBPUSDi",
+      "SymbolMemory":   "GBPUSD"
+    },
+    {
+      "SymbolTerminal": "USDJPYi",
+      "SymbolMemory":   "USDLPY"
+    },
+    {
+      "SymbolTerminal": "AUDUSDi",
+      "SymbolMemory":   "AUDUSD"
+    },
+    {
+      "SymbolTerminal": "NZDUSDi",
+      "SymbolMemory":   "NZDUSD"
+    },
+    {
+      "SymbolTerminal": "USDCADi",
+      "SymbolMemory":   "USDCAD"
+    }
+  ]
+}

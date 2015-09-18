@@ -8,46 +8,22 @@
 #property version   "1.00"
 #property strict
 
-#include  <Exchange.mqh>
+#include <Exchange\Config.mqh>
+#include <Exchange\Model.mqh>
+#include <Exchange\Exchange.mqh>
 
-enum NotificationType
-{
-   NAlert = 0,
-   NEmail = 1,
-   NPUSH = 2,
-   NSMS = 3
-};
-enum FilterType
-{
-   FMinSpreads = 0,
-   FMinPoints = 1
-};
 
-input string   textAlert = "----Notification settings";
-input bool     Signal = true;
-input NotificationType notificationType = NPUSH;
-input int      CountLimit = 1;
-input double   ResetCountMin = 1;
-input string   textCheck = "----Check stop quotes settings";
-input bool     TimeOut = true;
-input double   TimeOutQuoteSeconds = 30;
-input bool     MinSpreadsDeviations = true;
-input int      MinSpreads = 3;
-input string   textSystem = "----System settings";
-input int      UpdateMilliSecondsExpert = 100;
-
-Customer *Client;
+input string         FileConfig = "setting.json"; // Config file expert
+EXPERT               Config;
+Expert*              MainExpert;
 //+------------------------------------------------------------------+
 //| Expert initialization function                                   |
 //+------------------------------------------------------------------+
 int OnInit()
 {
-//--- create timer
-   //EventSetTimer(1);
-   Init();
-   Client.AddMonitor(StringSubstr(Symbol(), 0, 6), Symbol());
+   InitExpert(Config);
    OnTick();
-//---
+   
    return(INIT_SUCCEEDED);
 }
 //+------------------------------------------------------------------+
@@ -55,9 +31,7 @@ int OnInit()
 //+------------------------------------------------------------------+
 void OnDeinit(const int reason)
 {
-//--- destroy timer
-   EventKillTimer();
-   Deinit();
+   DeinitExpert();
 }
 //+------------------------------------------------------------------+
 //| Expert tick function                                             |
@@ -67,107 +41,34 @@ void OnTick()
    while(!IsStopped())
    {
       RefreshRates();
-      Work();
-      Sleep(UpdateMilliSecondsExpert);
-      /*
-      MqlDateTime time; TimeCurrent(time);
-      string symbol = Symbol();
-      datetime date_from[3], date_to[3];
-      bool result = true; int i = 0; string Log;
-      for (int i = 0; i < 3; i++)
-      {
-         result = SymbolInfoSessionQuote(symbol, time.day_of_week, i, date_from[i], date_to[i]);
-         Log += "i = " + i + "\n";
-         Log += "date from: " + TimeToString(date_from[i], TIME_SECONDS) + " sec. \n";
-         Log += "date to: " + TimeToString(date_to[i], TIME_SECONDS) + " sec. \n";
-      }
-      datetime date_start = SymbolInfoInteger(symbol, SYMBOL_START_TIME);
-      datetime date_end = SymbolInfoInteger(symbol, SYMBOL_EXPIRATION_TIME);
-      double market = MarketInfo(symbol, MODE_TRADEALLOWED);
-      Log += "date start: " + TimeToString(date_start) + " \n";
-      Log += "date end: " + TimeToString(date_end) + " \n";
-      Log += market;
-      Comment(Log);
-      */
+      MainExpert.Working();                        // MAIN WORKING EXPERTS
+      Sleep(Config.m_updateMilliSecondsExpert);    // SLEEP EXPERTS
    }
 }
 //+------------------------------------------------------------------+
-//| Timer function                                                   |
-//+------------------------------------------------------------------+
-void OnTimer()
-{
-   Work();
-}
-//+------------------------------------------------------------------+
 
-void Init()
+void InitConfig(EXPERT& config)
 {
-   StopQuotesChecker* checkDiff = new StopQuotesChecker(TimeOutQuoteSeconds);
-   CheckerInit(checkDiff);
-   
-   Client = new Customer(checkDiff);
-   AddNotification(Client, notificationType);
-}
-void Deinit()
-{
-   if (CheckPointer(Client) == POINTER_DYNAMIC)
-   {
-      delete Client;  Client = NULL;
-   }
-   /*if (CheckPointer(checkDiff) == POINTER_DYNAMIC)
-   {
-      delete checkDiff;  checkDiff = NULL;
-   }
-   for (int i = 0; i < ArraySize(filters); i++)
-   {
-      if (CheckPointer(filters[i]) == POINTER_DYNAMIC)
-      {
-         delete filters[i];  filters[i] = NULL;
-      }
-   }
-   if (CheckPointer(systemAlert) == POINTER_DYNAMIC)
-   {
-      delete systemAlert;  systemAlert = NULL;
-   }
-   */
+   Setting* setting = new Setting(FileConfig);
+   setting.Load(config);
+   if (CheckPointer(setting) == POINTER_DYNAMIC) delete setting;
 }
 
-void Work()
+void InitExpert(EXPERT& expertConfig)
 {
-   string Log;
-   Client.UpdateMonitors(Log);
-   Comment(Log);
+   // deinit expert if not NULL
+   DeinitExpert();
+   // Config init
+   InitConfig(expertConfig);
+   // Expert configurator init
+   ExpertConfigurator*  mainConfigurator = new ExpertConfigurator(expertConfig);
+   // Create expert
+   MainExpert = new Expert(mainConfigurator);
+   // delete expert configurator
+   if (CheckPointer(mainConfigurator) == POINTER_DYNAMIC) delete mainConfigurator;
 }
 
-void AddMonitor()
+void DeinitExpert()
 {
-   
-}
-
-void CheckerInit(StopQuotesChecker& checker)
-{
-   checker.EnableTimeOut(TimeOut);
-   if (MinSpreadsDeviations) AddFilter(checker, FMinSpreads);
-}
-
-void AddNotification(Customer& client, NotificationType type)
-{
-   switch(type)
-   {
-      case NAlert: client.AddNotification(new SystemAlert(true, CountLimit, ResetCountMin)); break;
-      case NEmail: client.AddNotification(new EmailNotification(true, CountLimit, ResetCountMin)); break;
-      //case NSMS: client.AddNotification(new SMS()); break;
-      case NPUSH: client.AddNotification(new PushNotification(true, CountLimit, ResetCountMin)); break;
-      default: client.AddNotification(new SystemAlert(true, CountLimit, ResetCountMin));
-   }
-}
-
-void AddFilter(Checker& checker, FilterType type)
-{
-   switch(type)
-   {
-      case FMinSpreads: checker.AddFilter(new MinSpreadsDeviation(MinSpreads, MinSpreads)); break;
-      //case FMinPoints:  checker.AddFilter(new MinPointsDeviation(MinSpreads, MinSpreads);
-      default:          checker.AddFilter(new MinSpreadsDeviation(MinSpreads, MinSpreads));
-   }
+   if (CheckPointer(MainExpert) == POINTER_DYNAMIC) delete MainExpert;
 }
