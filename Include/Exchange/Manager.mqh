@@ -76,8 +76,14 @@ private:
 protected:
    virtual bool VCheck(SData &his, SData &alien)
    {
-      double pointDeviationBuy   = alien.MQLTick.bid - his.MQLTick.ask;
-      double pointDeviationSell  = his.MQLTick.bid - alien.MQLTick.ask;
+      double spreadCurrent = NormalizeDouble(his.MQLTick.ask - his.MQLTick.bid, 5);
+      double spreadBefore = NormalizeDouble(his.MQLTickBefore.ask - his.MQLTickBefore.bid, 5);
+      double spread = (spreadCurrent + spreadBefore) / 2;
+      double calculatedAsk = (alien.MQLTick.ask - alien.MQLTick.bid) + spread / 2;
+      double clculatedBid = calculatedAsk - spread;
+      
+      double pointDeviationBuy   = clculatedBid - his.MQLTick.ask;
+      double pointDeviationSell  = his.MQLTick.bid - calculatedAsk;
       return (pointDeviationBuy > m_buyDeviation || pointDeviationSell > m_sellDeviation);
    }
 };
@@ -97,11 +103,13 @@ protected:
       double spreadCurrent = NormalizeDouble(his.MQLTick.ask - his.MQLTick.bid, 5);
       double spreadBefore = NormalizeDouble(his.MQLTickBefore.ask - his.MQLTickBefore.bid, 5);
       double spread = (spreadCurrent + spreadBefore) / 2;
+      double calculatedAsk = (alien.MQLTick.ask - alien.MQLTick.bid) + spread / 2;
+      double clculatedBid = calculatedAsk - spread;
       double koeffBuy = 0; double koeffSell = 0;
       if (NormalizeDouble(spread, 5) > 0)
       {
-         koeffBuy  = (alien.MQLTick.bid - his.MQLTick.ask) / spread;
-         koeffSell = (his.MQLTick.bid - alien.MQLTick.ask) / spread;
+         koeffBuy  = (clculatedBid - his.MQLTick.ask) / spread;
+         koeffSell = (his.MQLTick.bid - calculatedAsk) / spread;
       }
       return (koeffBuy > m_buyDeviation || koeffSell > m_sellDeviation);
    }
@@ -138,34 +146,25 @@ public:
    }
 };
 
-class StopQuotesNotificator : Manager
+class DeviationQuotes: Manager
 {
 protected:
    Filter*        m_filters[];
-   Notification*  m_notifications[];
    TIMEOUT        m_timeOutSettings;
    
 public:
-   StopQuotesNotificator(NotificationConfigurator* notificationConfigurator, FilterConfigurator* filterConfigurator, bool enabler = true) : Manager(enabler)
+   DeviationQuotes(FilterConfigurator* filterConfigurator, TIMEOUT& timeOutSettings , bool enabler = true) : Manager(enabler)
    {
-      notificationConfigurator.NotificationInit(m_notifications);
       filterConfigurator.FilterInit(m_filters);
+      m_timeOutSettings.Init(timeOutSettings);
    }
-  ~StopQuotesNotificator()
+  ~DeviationQuotes()
    {
-      int  i;
-      for (i = 0; i < ArraySize(m_filters); i++)
+      for (int i = 0; i < ArraySize(m_filters); i++)
       {
          if (CheckPointer(m_filters[i]) == POINTER_DYNAMIC)
          {
             delete m_filters[i]; m_filters[i] = NULL;
-         }
-      }
-      for (i = 0; i < ArraySize(m_notifications); i++)
-      {
-         if (CheckPointer(m_notifications[i]) == POINTER_DYNAMIC)
-         {
-            delete m_notifications[i]; m_notifications[i] = NULL;
          }
       }
    }
@@ -178,12 +177,15 @@ protected:
          
          if(CheckStopQuotes(datas[index], datas[i]))
          {
-            OnNotification(Log(datas[index], datas[i]));
+            Action(datas[index], datas[i]);
          }
       }
    }
-
-public:
+   virtual void Action(SData& his, SData& alien)
+   {
+      //OnNotification(Log(datas[index], datas[i]));
+   }
+   
    bool CheckStopQuotes(SData &his, SData &alien)
    {
       if (BaseCheck(his, alien))
@@ -195,13 +197,14 @@ public:
       }
       return false;
    }
-   
+
 private:
    bool BaseCheck(SData &his, SData &alien)
    {
       bool result = true;
       if (m_enabler)
       {
+         result = result && !ExpertTimeOut(alien);
          result = result && QuotesDeviation(his, alien); if (!result)   return false;
          result = result && QuotesTimeOut(his);
       }
@@ -218,9 +221,16 @@ private:
    // Check timeout quotes
    bool QuotesTimeOut(SData& his)
    {
-      if (!m_timeOutSettings.m_enabler)   return false;
+      if (!m_timeOutSettings.m_enabler)   return true;
       return his.TimeOutQuote * 0.000001 >= m_timeOutSettings.m_timeOutSeconds;
    }
+   
+   bool ExpertTimeOut(SData& alien)
+   {
+      if (!m_timeOutSettings.m_enabler)   return false;
+      return (TimeLocal() - alien.LastUpdateExpert) > m_timeOutSettings.m_timeOutExpertSeconds;
+   }
+   
    bool Filtration(SData &his, SData &alien)
    {
       int size = ArraySize(m_filters); int i = 0;
@@ -233,18 +243,7 @@ private:
       return result;
    }
 
-   void OnNotification(string text)
-   {
-      for(int i = 0; i < ArraySize(m_notifications); i++)
-      {
-         if (m_notifications[i].isNotification())
-         {
-            m_notifications[i].SetMessage(text);
-            m_notifications[i].Send();
-         }
-      }
-   }
-   
+protected:
    string StopLog(SData &his, SData &alien)
    {
       
@@ -308,4 +307,82 @@ private:
          "-------------------------------------------------------------------", "\n"
       );
    }
+};
+
+class StopQuotesNotificator : DeviationQuotes
+{
+protected:
+   Notification*  m_notifications[];
+   
+public:
+   StopQuotesNotificator(NotificationConfigurator* notificationConfigurator, FilterConfigurator* filterConfigurator, TIMEOUT& timeOutSettings , bool enabler = true) :
+      DeviationQuotes(filterConfigurator, timeOutSettings, enabler)
+   {
+      notificationConfigurator.NotificationInit(m_notifications);
+   }
+  ~StopQuotesNotificator()
+   {
+      for (int i = 0; i < ArraySize(m_notifications); i++)
+      {
+         if (CheckPointer(m_notifications[i]) == POINTER_DYNAMIC)
+         {
+            delete m_notifications[i]; m_notifications[i] = NULL;
+         }
+      }
+   }
+protected:
+   virtual void Action(SData& his, SData& alien)
+   {
+      OnNotification(Log(his, alien));
+   }
+   
+   void OnNotification(string text)
+   {
+      for(int i = 0; i < ArraySize(m_notifications); i++)
+      {
+         if (m_notifications[i].isNotification())
+         {
+            m_notifications[i].SetMessage(text);
+            m_notifications[i].Send();
+         }
+      }
+   }
+};
+
+
+#include "Trade.mqh"
+
+
+class DHunter : DeviationQuotes
+{
+public:
+   DHunter(FilterConfigurator* filterConfigurator, TIMEOUT& timeOutSettings , bool enabler = true) :
+      DeviationQuotes(filterConfigurator, timeOutSettings, enabler)
+   {
+      
+   }
+protected:
+   virtual void VWork(SData& datas[], int index)
+   {
+      for(int i = 0; i < ArraySize(datas); i++)
+      {
+         if (i == index) continue;
+         
+         if(CheckStopQuotes(datas[index], datas[i]))
+         {
+            Action(datas[index], datas[i]);
+         }
+         else
+         {
+            
+         }
+      }
+   }
+   virtual void Action(SData& his, SData& alien)
+   {
+      //OnNotification(Log(his, alien));
+   }
+
+private:
+   
 };

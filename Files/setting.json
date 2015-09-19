@@ -38,7 +38,8 @@
           },
           "TimeOut": {
             "Enabler": true,
-            "TimeOutSeconds": 20.0
+            "TimeOutSeconds": 20.0,
+            "TimeOutExpertSeconds": 3
           }
         }
       },
