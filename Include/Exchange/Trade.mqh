@@ -14,18 +14,24 @@ struct MQLRequestClose
    int      m_ticket;
    double   m_lots;
    double   m_price;
+   MqlTick  m_tick;
+   double   m_executionPrice;
+   ulong    m_executionMicrosecond;
    int      m_slippage;
    int      m_opposite;
    color    m_arraow_color;
+
    int      m_error;
    
-   void Init(int ticket, double lots, double price, int slippage, int opposite, color arraw_color = clrNONE, int error = 0)
+   void Init(int ticket, double lots, double price, const MqlTick& tick, double executionPrice, ulong executionMicrosecond, int slippage, int opposite, color arraw_color = clrNONE, int error = 0)
    {
-      m_ticket = ticket; m_lots = lots; m_price = price; m_slippage = slippage; m_opposite = opposite; m_arraow_color = arraw_color; m_error = error;
+      m_ticket = ticket; m_lots = lots; m_price = price;
+      m_tick.ask = tick.ask; m_tick.bid = tick.bid; m_tick.last = tick.last; m_tick.time = tick.time; m_tick.volume = tick.volume;
+      m_executionPrice = executionPrice; m_executionMicrosecond = executionMicrosecond; m_slippage = slippage; m_opposite = opposite; m_arraow_color = arraw_color; m_error = error;
    }
    void Init(const MQLRequestClose& request)
    {
-      Init(request.m_ticket, request.m_lots, request.m_price, request.m_slippage, request.m_opposite, request.m_arraow_color, request.m_error);
+      Init(request.m_ticket, request.m_lots, request.m_price, request.m_tick, request.m_executionPrice, request.m_executionMicrosecond, request.m_slippage, request.m_opposite, request.m_arraow_color, request.m_error);
    }
 };
 
@@ -35,6 +41,9 @@ struct MQLRequestOpen
    int      m_cmd;
    double   m_volume;
    double   m_price;
+   MqlTick  m_tick;
+   double   m_executionPrice;
+   ulong    m_executionMicrosecond;
    int      m_slippage;
    double   m_stoploss;
    double   m_takeprofit;
@@ -44,14 +53,16 @@ struct MQLRequestOpen
    color    m_arrow_color;
    int      m_error;
    
-   void Init(string symbol, int cmd, double volume, double price, int slippage, double stoploss, double takeprofit, string comment=NULL, int magic=0, datetime expiration=0, color arrow_color = clrNONE, int error = 0)
+   void Init(string symbol, int cmd, double volume, double price, const MqlTick& tick, double executionPrice, ulong executionMicrosecond, int slippage, double stoploss, double takeprofit, string comment = NULL, int magic = 0, datetime expiration = 0, color arrow_color = clrNONE, int error = 0)
    {
-      m_symbol = symbol; m_cmd = cmd; m_volume = volume; m_price = price; m_stoploss = stoploss; m_takeprofit = takeprofit;
+      m_symbol = symbol; m_cmd = cmd; m_volume = volume; m_price = price;
+      m_tick.ask = tick.ask; m_tick.bid = tick.bid; m_tick.last = tick.last; m_tick.time = tick.time; m_tick.volume = tick.volume;
+      m_executionPrice = executionPrice; m_executionMicrosecond = executionMicrosecond; m_stoploss = stoploss; m_takeprofit = takeprofit;
       m_comment = comment; m_magic = magic; m_expiration = expiration; m_arrow_color = arrow_color; m_error = error;
    }
    void Init(const MQLRequestOpen& request)
    {
-      Init(request.m_symbol, request.m_cmd, request.m_volume, request.m_price, request.m_slippage, request.m_stoploss, request.m_takeprofit, request.m_comment, request.m_magic, request.m_expiration, request.m_arrow_color, request.m_error);
+      Init(request.m_symbol, request.m_cmd, request.m_volume, request.m_price, request.m_tick, request.m_executionPrice, request.m_executionMicrosecond, request.m_slippage, request.m_stoploss, request.m_takeprofit, request.m_comment, request.m_magic, request.m_expiration, request.m_arrow_color, request.m_error);
    }
    /*
    void Init(const MQLOrder& order)
@@ -102,7 +113,7 @@ protected:
             if (cmd == OP_BUYLIMIT)
             {
                _minStopLevel = ask - minstoplevel;
-               if (price > _minStopLevel)
+               if (price > _minStopLevel || NormalizeDouble(price, 5) == 0.00000)
                {
                   if (requestPriceCorrect)   { price = _minStopLevel; }
                   else                       { error = ERR_INVALID_PRICE; return false; }
@@ -111,7 +122,7 @@ protected:
             else if (cmd == OP_BUYSTOP)
             {
                _minStopLevel = ask + minstoplevel;
-               if (price < _minStopLevel)
+               if (price < _minStopLevel || NormalizeDouble(price, 5) == 0.00000)
                {
                   if (requestPriceCorrect)   { price = _minStopLevel; }
                   else                       { error = ERR_INVALID_PRICE; return false; }
@@ -128,14 +139,14 @@ protected:
             if (cmd == OP_SELLLIMIT)
             {
                _minStopLevel = bid + minstoplevel;
-               if (price < _minStopLevel)
+               if (price < _minStopLevel || NormalizeDouble(price, 5) == 0.00000)
                {
                   if (requestPriceCorrect)   { price = _minStopLevel; }
                   else                       { error = ERR_INVALID_PRICE; return false; }
                }
                
             }
-            else if (cmd == OP_SELLSTOP)
+            else if (cmd == OP_SELLSTOP || NormalizeDouble(price, 5) == 0.00000)
             {
                _minStopLevel = bid - minstoplevel;
                if (price > _minStopLevel)
@@ -229,29 +240,26 @@ protected:
       return true;
    }
    
-   static bool CheckAndCorrectRequest(MQLRequestOpen& request, bool requestPriceCorrect, bool stoplossCorrect, bool takeprofitCorrect)
+   static bool CheckAndCorrectRequest(MQLRequestOpen& request, bool requestVolumeCorrect, bool requestPriceCorrect, bool stoplossCorrect, bool takeprofitCorrect)
    {
       double point = SymbolInfoDouble(request.m_symbol, SYMBOL_POINT);
       double minstoplevel = SymbolInfoInteger(request.m_symbol, SYMBOL_TRADE_STOPS_LEVEL) * point;
-      double ask = MarketInfo(request.m_symbol, MODE_ASK);
-      double bid = MarketInfo(request.m_symbol, MODE_BID);
-      double spread = ask - bid;
-      
-      if (!CheckAndCorrectPrice(request.m_cmd, ask, bid, minstoplevel, requestPriceCorrect, request.m_price, request.m_error)) return false;
+      double spread = request.m_tick.ask - request.m_tick.bid;
+      if (!CheckAndCorrectVolume(request.m_symbol, request.m_volume, requestVolumeCorrect))   return false;
+      if (!CheckAndCorrectPrice(request.m_cmd, request.m_tick.ask, request.m_tick.bid, minstoplevel, requestPriceCorrect, request.m_price, request.m_error)) return false;
       
       double priceForCheckStopOrder = request.m_price;
-      double priceForCheckTakeOrder = request.m_price;
       if (request.m_cmd == OP_BUY || request.m_cmd == OP_BUYLIMIT || request.m_cmd == OP_BUYSTOP)
       {
-         priceForCheckStopOrder -= spread; priceForCheckTakeOrder += spread;
+         priceForCheckStopOrder -= spread;
       }
       else
       {
-         priceForCheckStopOrder += spread; priceForCheckTakeOrder -= spread;
+         priceForCheckStopOrder += spread;
       }
       
       if (!CheckAndCorrectStopLoss(request.m_cmd, priceForCheckStopOrder, minstoplevel, stoplossCorrect, request.m_stoploss, request.m_error))     return false;
-      if (!CheckAndCorrectTakeProfit(request.m_cmd, priceForCheckTakeOrder, minstoplevel, stoplossCorrect, request.m_stoploss, request.m_error))   return false;
+      if (!CheckAndCorrectTakeProfit(request.m_cmd, priceForCheckStopOrder, minstoplevel, stoplossCorrect, request.m_stoploss, request.m_error))   return false;
       
       return true;
    }
@@ -260,10 +268,8 @@ protected:
    {
       double point = SymbolInfoDouble(orderSymbol, SYMBOL_POINT);
       double minstoplevel = SymbolInfoInteger(orderSymbol, SYMBOL_TRADE_STOPS_LEVEL) * point;
-      double ask = MarketInfo(orderSymbol, MODE_ASK);
-      double bid = MarketInfo(orderSymbol, MODE_BID);
       
-      if (!CheckAndCorrectPrice(orderCmd, ask, bid, minstoplevel, requestPriceCorrect, request.m_price, request.m_error)) return false;
+      if (!CheckAndCorrectPrice(orderCmd, request.m_tick.ask, request.m_tick.bid, minstoplevel, requestPriceCorrect, request.m_price, request.m_error)) return false;
       if (orderLots < request.m_lots || request.m_lots <= 0)
       {
          if (requestVolumeCorrect)
@@ -279,38 +285,102 @@ protected:
       
       return true;
    }
-
+   static bool CheckAndCorrectVolume(string symbol, double& volume, bool volumeCorrect = true)
+   {
+      bool result = false;
+      double minVolume = SymbolInfoDouble(symbol, SYMBOL_VOLUME_MIN);
+      double maxVolume = SymbolInfoDouble(symbol, SYMBOL_VOLUME_MAX);
+      double stepVolume = SymbolInfoDouble(symbol, SYMBOL_VOLUME_STEP);
+      
+      if (volume > 0 && volume >= minVolume && volume <= maxVolume)
+      {
+         result = true;
+      }
+      else
+      {
+         Print(__FUNCTION__, ": incorrect volume '", volume, "'");
+         if (volumeCorrect)
+         {
+            if (volume < 0 || volume < minVolume) volume = minVolume;
+            if (volume > maxVolume) volume = maxVolume;
+            Print(__FUNCTION__, ": volume corrected '", volume, "'");
+            result = true;
+         }
+         else result = false;
+      }
+      return result;
+   }
+   static bool SymbolExists(string symbol)
+   {
+      if (!SymbolSelect(symbol, false))
+      {
+         if (!SymbolSelect(symbol, true))
+         {
+            Print(__FUNCTION__, ": symbol '", "' not found");
+            return false;
+         }
+      }
+      return true;
+   }
+   static bool CmdExists(int cmd)
+   {
+      if (!(cmd >= OP_BUY && cmd <= OP_SELLSTOP))
+      {
+         Print(__FUNCTION__, ": cmd '", cmd, "' not valid");
+         return false;
+      }
+      return true;
+   }
+   
 public:
-   static bool OpenOrder(const MQLRequestOpen& request, MQLOrder& responce, MQLRequestOpen& requestTry[], int countTryLimit = 5, bool requestPriceCorrect = true, bool stoplossCorrect = true, bool takeprofitCorrect = true)
+   static bool OpenOrder(const MQLRequestOpen& request, MQLOrder& responce, MQLRequestOpen& requestTry[], int countTryLimit = 5, bool requestVolumeCorrect = true, bool requestPriceCorrect = true, bool stoplossCorrect = true, bool takeprofitCorrect = true)
    {
       ulong timeOpenPosition = GetMicrosecondCount(); Print(__FUNCTION__, ": Start");
       bool criticalError = false; int ticket = -1;
       bool result = false;
+      if (!(IsConnected() && IsExpertEnabled()))   return false;
+      if (!SymbolExists(request.m_symbol)) return false;
+      
+      if (!CmdExists(request.m_cmd))   return false;
       
       do
-      {
+      {  
+         int i = 1000;
+         while (!IsTradeAllowed() && i > 0)   { Sleep(10); i--; }
          int index = ArrayResize(requestTry, ArraySize(requestTry) + 1) - 1;
          requestTry[index].Init(request);
+         SymbolInfoTick(requestTry[index].m_symbol, requestTry[index].m_tick);
          
-         if (!CheckAndCorrectRequest(requestTry[index], requestPriceCorrect, stoplossCorrect, takeprofitCorrect)) break;
+         if (!CheckAndCorrectRequest(requestTry[index], requestVolumeCorrect, requestPriceCorrect, stoplossCorrect, takeprofitCorrect)) break;
          
          int digits = SymbolInfoInteger(requestTry[index].m_symbol, SYMBOL_DIGITS);
+         double stoploss, takeprofit;
+         if (requestTry[index].m_cmd == OP_BUY || requestTry[index].m_cmd == OP_BUY || requestTry[index].m_cmd == OP_BUY)
+         {
+            stoploss = NormalizeDouble(requestTry[index].m_stoploss, digits) > 0 ? requestTry[index].m_price - requestTry[index].m_stoploss : 0;
+            takeprofit = NormalizeDouble(requestTry[index].m_takeprofit, digits) > 0 ? requestTry[index].m_price + requestTry[index].m_takeprofit : 0;
+         }
+         else
+         {
+            stoploss = NormalizeDouble(requestTry[index].m_stoploss, digits) > 0 ? requestTry[index].m_price + requestTry[index].m_stoploss : 0;
+            takeprofit = NormalizeDouble(requestTry[index].m_takeprofit, digits) > 0 ? requestTry[index].m_price - requestTry[index].m_takeprofit : 0;
+         }
          
          ulong timeExecution = GetMicrosecondCount();
-         
          ticket = OrderSend(requestTry[index].m_symbol,
                             requestTry[index].m_cmd,
                             NormalizeDouble(requestTry[index].m_volume, 2),
                             NormalizeDouble(requestTry[index].m_price, digits),
                             requestTry[index].m_slippage,
-                            NormalizeDouble(requestTry[index].m_stoploss, digits),
-                            NormalizeDouble(requestTry[index].m_takeprofit, digits),
+                            NormalizeDouble(stoploss, digits),
+                            NormalizeDouble(takeprofit, digits),
                             requestTry[index].m_comment,
                             requestTry[index].m_magic,
                             requestTry[index].m_expiration,
                             requestTry[index].m_arrow_color);
-         
          timeExecution = (GetMicrosecondCount() - timeExecution);
+         requestTry[index].m_executionMicrosecond = timeExecution;
+         
          countTryLimit--;
          
          if (ticket < 0)
@@ -333,18 +403,19 @@ public:
          else
          {
             OrderSelect(ticket, SELECT_BY_TICKET);
+            requestTry[index].m_executionPrice = OrderOpenPrice();
             responce.Init(requestTry[index]);
             responce.m_ticket = ticket;
-            responce.m_price = OrderOpenPrice();
+            responce.m_price = requestTry[index].m_executionPrice;
             
             double _slippage = 0;
             if (responce.m_cmd == OP_BUY || responce.m_cmd == OP_BUYLIMIT || responce.m_cmd == OP_BUYSTOP)
             {
-               _slippage = requestTry[index].m_price - responce.m_price;
+               _slippage = requestTry[index].m_price - requestTry[index].m_executionPrice;
             }
-            else  _slippage = responce.m_price - requestTry[index].m_price;
+            else  _slippage = requestTry[index].m_executionPrice - requestTry[index].m_price;
             
-            Print(__FUNCTION__, ": OK; ticket #", responce.m_ticket, "; execution time: ", DoubleToString(timeExecution / 1000, 3), " milliseconds;", " Request price: ", DoubleToString(requestTry[index].m_price, digits), "; Execution Price: ", DoubleToString(responce.m_price, digits), "; Slippage: ", DoubleToString(_slippage, digits));
+            Print(__FUNCTION__, ": OK; ticket #", responce.m_ticket, "; execution time: ", DoubleToString(timeExecution / 1000, 3), " milliseconds;", " Request price: ", DoubleToString(requestTry[index].m_price, digits), "; Execution Price: ", DoubleToString(requestTry[index].m_executionPrice, digits), "; Slippage: ", DoubleToString(_slippage, digits));
             result = true;
          }
       }
@@ -361,51 +432,74 @@ public:
       ulong timeOpenPosition = GetMicrosecondCount(); Print(__FUNCTION__, ": Start");
       ulong timeExecution = 0; string error_description = NULL;
       
-      bool result = false;
-      if (OrderSelect(request.m_ticket, SELECT_BY_TICKET))
+      if (!(IsConnected() && IsExpertEnabled()))   return false;
+      
+      bool result = false; bool criticalError = false;
+      do
       {
-         int type = OrderType();
-         if (type == OP_BUY || type == OP_SELL)
+         int i = 1000;
+         while (!IsTradeAllowed() && i > 0)   { Sleep(10); i--; }
+         
+         if (OrderSelect(request.m_ticket, SELECT_BY_TICKET))
          {
-            if (request.m_opposite > 0)
+            int index = ArrayResize(requestTry, ArraySize(requestTry) + 1) - 1;
+            
+            requestTry[index].Init(request);
+            SymbolInfoTick(OrderSymbol(), requestTry[index].m_tick);
+            int digits = SymbolInfoInteger(OrderSymbol(), SYMBOL_DIGITS);
+            
+            int type = OrderType();
+            if (type == OP_BUY || type == OP_SELL)
             {
-               int index = ArrayResize(requestTry, ArraySize(requestTry) + 1) - 1;
-               requestTry[index].Init(request);
-               
-               timeExecution = GetMicrosecondCount();
-               result = OrderCloseBy(request.m_ticket, request.m_opposite, request.m_arraow_color);
-               timeExecution = (GetMicrosecondCount() - timeExecution);
-               
-               if (result)
+               if (requestTry[index].m_opposite > 0)
                {
-                  Print(__FUNCTION__, ": Order #", request.m_ticket, " closed by #", request.m_opposite, "; execution time: ", DoubleToString(timeExecution / 1000, 3), " milliseconds");
+                  timeExecution = GetMicrosecondCount();
+                  result = OrderCloseBy(requestTry[index].m_ticket, requestTry[index].m_opposite, requestTry[index].m_arraow_color);
+                  timeExecution = (GetMicrosecondCount() - timeExecution);
+                  requestTry[index].m_executionMicrosecond = timeExecution;
+                  
+                  countTryLimit--;
+                  
+                  if (result)
+                  {
+                     requestTry[index].m_executionPrice = OrderClosePrice();
+                     OrderSelect(requestTry[index].m_opposite, SELECT_BY_TICKET);
+                     requestTry[index].m_price = OrderClosePrice();
+                     Print(__FUNCTION__, ": Order #", requestTry[index].m_ticket, " closed by #", requestTry[index].m_opposite, "; execution time: ", DoubleToString(timeExecution / 1000, 3), " milliseconds");
+                  }
+                  else
+                  {
+                     requestTry[index].m_error = GetLastError(); criticalError = false;
+                     error_description = ErrorDescription(requestTry[index].m_error);
+                     Print(__FUNCTION__, ": Order #", requestTry[index].m_ticket, " not closed by #", requestTry[index].m_opposite, "; error code: ", requestTry[index].m_error, " - '", error_description, "'; execution time: ", DoubleToString(timeExecution / 1000, 3), " milliseconds");
+                     switch(requestTry[index].m_error)
+                     {
+                        default: criticalError = true;
+                     }
+                  }
                }
                else
                {
-                  requestTry[index].m_error = GetLastError();
-                  error_description = ErrorDescription(request.m_error);
-                  Print(__FUNCTION__, ": Order #", request.m_ticket, " not closed by #", request.m_opposite, "; error code: ", request.m_error, " - '", error_description, "'; execution time: ", DoubleToString(timeExecution / 1000, 3), " milliseconds");
-               }
-               
-            }
-            else
-            {
-               bool criticalError = false;
-               do
-               {
-                  int index = ArrayResize(requestTry, ArraySize(requestTry) + 1) - 1;
-                  requestTry[index].Init(request);
-                  
-                  if (!CheckAndCorrectRequest(requestTry[index], OrderSymbol(), OrderType(), OrderLots(), true, true))   break;
+                  if (!CheckAndCorrectRequest(requestTry[index], OrderSymbol(), OrderType(), OrderLots(), requestPriceCorrect, requestVolumeCorrect))   break;
                   
                   timeExecution = GetMicrosecondCount();
                   result = OrderClose(requestTry[index].m_ticket, requestTry[index].m_lots, requestTry[index].m_price, requestTry[index].m_slippage, requestTry[index].m_arraow_color);
                   timeExecution = (GetMicrosecondCount() - timeExecution);
+                  requestTry[index].m_executionMicrosecond = timeExecution;
                   
                   countTryLimit--;
+                  
                   if (result)
                   {
-                     Print(__FUNCTION__, ": Order #", requestTry[index].m_ticket, " closed; execution time: ", DoubleToString(timeExecution / 1000, 3), " milliseconds");
+                     requestTry[index].m_executionPrice = OrderOpenPrice();
+                     double _slippage = 0;
+                     if (type == OP_BUY || type == OP_BUYLIMIT || type == OP_BUYSTOP)
+                     {
+                        _slippage = requestTry[index].m_price - requestTry[index].m_executionPrice;
+                     }
+                     else  _slippage = requestTry[index].m_executionPrice - requestTry[index].m_price;
+                     
+                     Print(__FUNCTION__, ": OK; Order #", requestTry[index].m_ticket, "; closed; execution time: ", DoubleToString(timeExecution / 1000, 3), " milliseconds;", " Request price: ", DoubleToString(requestTry[index].m_price, digits), "; Execution Price: ", DoubleToString(requestTry[index].m_executionPrice, digits), "; Slippage: ", DoubleToString(_slippage, digits));
                      result = true;
                   }
                   else
@@ -427,38 +521,48 @@ public:
                      result = false;
                   }
                }
-               while(!criticalError && !result && countTryLimit > 0);
+            }
+            else
+            {
+               if (type == OP_BUYLIMIT || type == OP_BUYSTOP)
+               {
+                  requestTry[index].m_price = requestTry[index].m_tick.bid;
+               }
+               else
+               {
+                  requestTry[index].m_price = requestTry[index].m_tick.ask;
+               }
+               
+               timeExecution = GetMicrosecondCount();
+               result = OrderDelete(requestTry[index].m_ticket, requestTry[index].m_arraow_color);
+               timeExecution = (GetMicrosecondCount() - timeExecution);
+               requestTry[index].m_executionMicrosecond = timeExecution;
+               
+               countTryLimit--;
+               
+               if (result)
+               {
+                  requestTry[index].m_executionPrice = OrderClosePrice();
+                  Print(__FUNCTION__, ": Order #", requestTry[index].m_ticket, " deleted; execution time: ", DoubleToString(timeExecution / 1000, 3), " milliseconds");
+                  result = true;
+               }
+               else
+               {
+                  requestTry[index].m_error = GetLastError();
+                  error_description = ErrorDescription(requestTry[index].m_error);
+                  Print(__FUNCTION__, ": Order #", requestTry[index].m_ticket, " not deleted; error code: ", requestTry[index].m_error, " - '", error_description, "'; execution time: ", DoubleToString(timeExecution / 1000, 3), " milliseconds");
+                  result = false;
+               }
             }
          }
          else
          {
-            int index = ArrayResize(requestTry, ArraySize(requestTry) + 1) - 1;
-            requestTry[index].Init(request);
-            
-            timeExecution = GetMicrosecondCount();
-            result = OrderDelete(request.m_ticket, request.m_arraow_color);
-            timeExecution = (GetMicrosecondCount() - timeExecution);
-            
-            if (result)
-            {
-               Print(__FUNCTION__, ": Order #", request.m_ticket, " deleted; execution time: ", DoubleToString(timeExecution / 1000, 3), " milliseconds");
-               result = true;
-            }
-            else
-            {
-               requestTry[index].m_error = GetLastError();
-               error_description = ErrorDescription(request.m_error);
-               Print(__FUNCTION__, ": Order #", request.m_ticket, " not deleted; error code: ", request.m_error, " - '", error_description, "'; execution time: ", DoubleToString(timeExecution / 1000, 3), " milliseconds");
-               result = false;
-            }
+            Print(__FUNCTION__, ": order #", request.m_ticket, " not found");
+            result = false;
          }
       }
-      else
-      {
-         Print(__FUNCTION__, ": order #", request.m_ticket, " not found");
-         result = false;
-      }
-      
+      while(!criticalError && !result && countTryLimit > 0);
+
       timeOpenPosition = (GetMicrosecondCount() - timeOpenPosition);
       Print(__FUNCTION__, ": End; time: ", DoubleToString(timeOpenPosition / 1000, 3), " milliseconds");
       return result;

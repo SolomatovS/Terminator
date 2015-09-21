@@ -205,6 +205,7 @@ private:
       if (m_enabler)
       {
          result = result && !ExpertTimeOut(alien);
+         result = result && TradeAllowed(his, alien);
          result = result && QuotesDeviation(his, alien); if (!result)   return false;
          result = result && QuotesTimeOut(his);
       }
@@ -229,6 +230,11 @@ private:
    {
       if (!m_timeOutSettings.m_enabler)   return false;
       return (TimeLocal() - alien.LastUpdateExpert) > m_timeOutSettings.m_timeOutExpertSeconds;
+   }
+   
+   bool TradeAllowed(SData& his, SData& alien)
+   {
+      return (his.isTradeAllowed && alien.isTradeAllowed);
    }
    
    bool Filtration(SData &his, SData &alien)
@@ -276,6 +282,7 @@ protected:
       return NULL;
    }
    
+   
    string Log(SData &his, SData &alien)
    {
       string company = CharArrayToString(alien.Terminal.Company);
@@ -299,12 +306,14 @@ protected:
          "-------------------------------------------------------------------", "\n");
        return text + StringConcatenate(
          "  TimeOut           ", DoubleToString(alien.TimeOutQuote * 0.000001, 1), " sec.     |    ", DoubleToString(his.TimeOutQuote * 0.000001, 1), " sec.\n",
+         "  LastUpdate        ", TimeToString(alien.LastUpdateExpert, TIME_MINUTES|TIME_SECONDS), "    |    ", TimeToString(his.LastUpdateExpert, TIME_MINUTES|TIME_SECONDS), "\n",
          "  Spread avg        ", DoubleToString(spreadAverageAlien, 5), "    |     ", DoubleToString(spreadAverage, 5), "    \n",
+         "  TradeAllowed      ", alien.isTradeAllowed, "        |      ", his.isTradeAllowed, "          \n",
          "-------------------------------------------------------------------", "\n",
          "  Buy:                " , DoubleToString(NormalizeDouble(spreadAverage, 5) > 0 ? pointBuy / spreadAverage : 0,  2), " sp.    |   ", DoubleToString(pointBuy,  5), " pt.", "\n",
          "  Sell:                 ", DoubleToString(NormalizeDouble(spreadAverage, 5) > 0 ? pointSell / spreadAverage : 0, 2), " sp.    |   ", DoubleToString(pointSell, 5), " pt.", "\n",
          //"     Stop quotes: ", string(status), "\n",
-         "-------------------------------------------------------------------", "\n"
+         "-------------------------------------------------------------------", "\n\n"
       );
    }
 };
@@ -355,11 +364,25 @@ protected:
 
 class DHunter : DeviationQuotes
 {
+   Trade    m_trader;
+   int      m_magic;
+   
+   bool     m_requestVolumeCorrect;
+   bool     m_requestPriceCorrect;
+   bool     m_requestStoplossCorrect;
+   bool     m_requestTakeprofitCorrect;
+   int      m_tryOpenCount;
+   
 public:
    DHunter(FilterConfigurator* filterConfigurator, TIMEOUT& timeOutSettings , bool enabler = true) :
       DeviationQuotes(filterConfigurator, timeOutSettings, enabler)
    {
-      
+      m_requestVolumeCorrect = false;
+      m_requestPriceCorrect = false;
+      m_requestStoplossCorrect = true;
+      m_requestTakeprofitCorrect = true;
+      m_tryOpenCount = 5;
+      m_magic = 111;
    }
 protected:
    virtual void VWork(SData& datas[], int index)
@@ -370,19 +393,73 @@ protected:
          
          if(CheckStopQuotes(datas[index], datas[i]))
          {
-            Action(datas[index], datas[i]);
+            ActionStopQuotes(datas[index], datas[i]);
          }
          else
          {
-            
+            ActionNoStopQuotes(datas[index], datas[i]);
          }
       }
    }
-   virtual void Action(SData& his, SData& alien)
+   virtual void ActionStopQuotes(SData& his, SData& alien)
    {
-      //OnNotification(Log(his, alien));
+      MQLRequestOpen request; FillRequest(request, his, alien);
+      MQLRequestOpen try[];
+      MQLOrder order;
+      
+      bool result = m_trader.OpenOrder(request,
+                                       order,
+                                       try,
+                                       m_tryOpenCount,
+                                       m_requestVolumeCorrect,
+                                       m_requestPriceCorrect,
+                                       m_requestStoplossCorrect,
+                                       m_requestTakeprofitCorrect);
+   
+      if (result)
+      {
+         Print(__FUNCTION__, ": Opened order #", order.m_ticket, "; cmd ", request.m_cmd, "; price ", DoubleToString(order.m_price, 5), ";");
+      }
+      else
+      {
+         
+      }
+   }
+   virtual void ActionNoStopQuotes(SData& his, SData& alien)
+   {
+      
    }
 
 private:
+   void FillRequest(MQLRequestOpen& request, SData& his, SData& alien)
+   {
+      request.m_cmd = FillRequestCMD(his, alien);
+      request.m_symbol = CharArrayToString(his.TSymbol);
+      FillRequestVolume(request.m_volume);
+      FillRequestPrice(request.m_tick, request.m_cmd, request.m_price);
+      request.m_magic = m_magic;
+      request.m_slippage = 0;
+   }
    
+   int FillRequestCMD(SData& his, SData& alien)
+   {
+      if (alien.MQLTick.bid > his.MQLTick.ask)
+      {
+         return OP_BUY;
+      }
+      if (alien.MQLTick.ask < his.MQLTick.bid)
+      {
+         return OP_SELL;
+      }
+      return -1;
+   }
+   void FillRequestPrice(const MqlTick& tick, int cmd, double& price)
+   {
+      if (cmd == OP_BUY)  price = tick.ask;
+      if (cmd == OP_SELL) price = tick.bid;
+   }
+   void FillRequestVolume(double volume)
+   {
+      volume = 0.01;
+   }
 };

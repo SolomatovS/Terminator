@@ -2,6 +2,7 @@
   "UpdateMilliSecondsExpert": 100,
   "Defaults": {
     "Monitor": {
+      "UTC": 2,
       "Prefix": "Local",
       "Managers": {
         "StopQuotesNotificator": {
@@ -50,27 +51,12 @@
   "Monitors": [
     {
       "SymbolTerminal": "EURUSDi",
-      "SymbolMemory":   "EURUSD"
-    },
-    {
-      "SymbolTerminal": "GBPUSDi",
-      "SymbolMemory":   "GBPUSD"
-    },
-    {
-      "SymbolTerminal": "USDJPYi",
-      "SymbolMemory":   "USDLPY"
-    },
-    {
-      "SymbolTerminal": "AUDUSDi",
-      "SymbolMemory":   "AUDUSD"
-    },
-    {
-      "SymbolTerminal": "NZDUSDi",
-      "SymbolMemory":   "NZDUSD"
-    },
-    {
-      "SymbolTerminal": "USDCADi",
-      "SymbolMemory":   "USDCAD"
+      "SymbolMemory":   "EURUSD",
+      "Managers": {
+        "DHunter": {
+          "Enabler": true
+        }
+      }
     }
   ]
 }

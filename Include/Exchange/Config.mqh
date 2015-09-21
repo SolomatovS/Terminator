@@ -44,8 +44,6 @@ public:
       {
          result = Parse((JSONObject*)config, setting);
          Print(__FUNCTION__, ": json:");
-         //Print(__FUNCTION__, ": PARSED: " + config.toString());
-         //result = true;
       }
       
       if (CheckPointer(config) == POINTER_DYNAMIC) { delete config; config = NULL; }
@@ -64,7 +62,7 @@ private:
          Print(__FUNCTION__, ": not pase 'UpdateMilliSecondsExpert'. stop parsing."); return result;
       }
       
-      MONITOR defaultMonitor;
+      MONITOR defaultMonitor; defaultMonitor.m_UTC = 0;
       JSONObject* defaults = object.getObject("Defaults");
       if(defaults != NULL)
       {
@@ -83,9 +81,18 @@ private:
                      monitor = arrayMonitors.getObject(i);
                      if (monitor != NULL)
                      {
+                        MONITOR cash; cash.Init(defaultMonitor);
+                        ParseMonitor(monitor, cash);
+                        if (!SymbolSelect(cash.m_symbolTerminal, false))
+                        {
+                           if (!SymbolSelect(cash.m_symbolTerminal, true))
+                           {
+                              continue;
+                           }
+                        }
+                        
                         int index = ArrayResize(setting.m_monitors, ArraySize(setting.m_monitors) + 1) - 1;
-                        setting.m_monitors[index].Init(defaultMonitor);
-                        ParseMonitor(monitor, setting.m_monitors[index]);
+                        setting.m_monitors[index].Init(cash);
                      }
                   }
                }
@@ -117,7 +124,14 @@ private:
             bool result = defaultMonitor.getString("Prefix", monitor.m_prefix);
             if (!result)
             {
-               Print(__FUNCTION__, ": not pase 'Defaults:Monitor:Prefix'. stop parsing.");
+               Print(__FUNCTION__, ": not parse 'Defaults:Monitor:Prefix'. stop parsing.");
+            }
+            
+            // UTC
+            result = defaultMonitor.getInt("UTC", monitor.m_UTC);
+            if (!result)
+            {
+               Print(__FUNCTION__, ": not parse 'Defaults:Monitor:UTC'. stop parsing.");
             }
             
             // SymbolMemory
@@ -138,6 +152,22 @@ private:
             JSONObject* managers = defaultMonitor.getObject("Managers");
             if (managers != NULL)
             {
+               JSONObject* dHunter = managers.getObject("DHunter");
+               if (dHunter != NULL)
+               {
+                  // STOP QUOTES NOTIFICATOR ENABLER
+                  result = dHunter.getBool("Enabler", monitor.m_managers.m_dHunter.m_enabler);
+                  if (!result)
+                  {
+                     Print(__FUNCTION__, ": not parse 'Defaults:Monitor:Managers:DHunter:Enabler'. stop parsing.");
+                  }
+               }
+               else
+               {
+                  Print(__FUNCTION__, ": not parse 'Defaults:Monitor:Managers:DHunter'. stop parsing.");
+               }
+               if (CheckPointer(dHunter) == POINTER_DYNAMIC)  delete dHunter;
+               
                JSONObject* stopQuotesNotificator = managers.getObject("StopQuotesNotificator");
                if (stopQuotesNotificator != NULL)
                {
