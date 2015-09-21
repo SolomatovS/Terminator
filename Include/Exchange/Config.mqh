@@ -62,7 +62,7 @@ private:
          Print(__FUNCTION__, ": not pase 'UpdateMilliSecondsExpert'. stop parsing."); return result;
       }
       
-      MONITOR defaultMonitor; defaultMonitor.m_UTC = 0;
+      MONITOR defaultMonitor; defaultMonitor.m_UTC = 0; defaultMonitor.m_updater = false; defaultMonitor.m_logger = false;
       JSONObject* defaults = object.getObject("Defaults");
       if(defaults != NULL)
       {
@@ -132,6 +132,20 @@ private:
             if (!result)
             {
                Print(__FUNCTION__, ": not parse 'Defaults:Monitor:UTC'. stop parsing.");
+            }
+            
+            // Updater
+            result = defaultMonitor.getBool("Updater", monitor.m_updater);
+            if (!result)
+            {
+               Print(__FUNCTION__, ": not parse 'Defaults:Monitor:Updater'. stop parsing.");
+            }
+            
+            // Logger
+            result = defaultMonitor.getBool("Logger", monitor.m_logger);
+            if (!result)
+            {
+               Print(__FUNCTION__, ": not parse 'Defaults:Monitor:Logger'. stop parsing.");
             }
             
             // SymbolMemory

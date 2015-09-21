@@ -3,6 +3,8 @@
   "Defaults": {
     "Monitor": {
       "UTC": 2,
+      "Updater": false,
+      "Logger": false,
       "Prefix": "Local",
       "Managers": {
         "StopQuotesNotificator": {
