@@ -3,15 +3,12 @@
   "Defaults": {
     "Monitor": {
       "UTC": 2,
-      "Updater": true,
-      "Logger": false,
+      "Updater": false,
+      "Logger": true,
       "Prefix": "Local",
       "Managers": {
-        "DHunter": {
-          "Enabler": false
-        },
         "StopQuotesNotificator": {
-          "Enabler": false,
+          "Enabler": true,
           "Filters": {
             "MinPointsDeviation": {
               "Enabler": false,
@@ -19,14 +16,14 @@
               "DeviationSell": 0.00001
             },
             "MinSpreadsDeviation": {
-              "Enabler": false,
+              "Enabler": true,
               "DeviationBuy": 3,
               "DeviationSell": 3
             }
           },
           "Notifications": {
             "Alert": {
-              "Enabler": false,
+              "Enabler": true,
               "CountLimit": 1,
               "ResetCountMinute": 1.0
             },
@@ -43,8 +40,8 @@
             }
           },
           "TimeOut": {
-            "Enabler": false,
-            "TimeOutSeconds": 20.0,
+            "Enabler": true,
+            "TimeOutSeconds": 0.0,
             "TimeOutExpertSeconds": 3
           }
         }
@@ -56,23 +53,12 @@
   "Monitors": [
     {
       "SymbolTerminal": "EURUSDi",
-      "SymbolMemory":   "EURUSD"
-    },
-    {
-      "SymbolTerminal": "GBPUSDi",
-      "SymbolMemory":   "GBPUSD"
-    },
-    {
-      "SymbolTerminal": "USDJPYi",
-      "SymbolMemory":   "USDJPY"
-    },
-    {
-      "SymbolTerminal": "AUDUSDi",
-      "SymbolMemory":   "AUDUSD"
-    },
-    {
-      "SymbolTerminal": "USDCADi",
-      "SymbolMemory":   "USDCAD"
+      "SymbolMemory":   "EURUSD",
+      "Managers": {
+        "DHunter": {
+          "Enabler": true
+        }
+      }
     }
   ]
 }

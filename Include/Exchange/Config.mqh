@@ -62,7 +62,7 @@ private:
          Print(__FUNCTION__, ": not pase 'UpdateMilliSecondsExpert'. stop parsing."); return result;
       }
       
-      MONITOR defaultMonitor; defaultMonitor.m_UTC = 0; defaultMonitor.m_updater = false; defaultMonitor.m_logger = false;
+      MONITOR defaultMonitor; defaultMonitor.Init();
       JSONObject* defaults = object.getObject("Defaults");
       if(defaults != NULL)
       {

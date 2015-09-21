@@ -64,12 +64,12 @@ struct MQLRequestOpen
    {
       Init(request.m_symbol, request.m_cmd, request.m_volume, request.m_price, request.m_tick, request.m_executionPrice, request.m_executionMicrosecond, request.m_slippage, request.m_stoploss, request.m_takeprofit, request.m_comment, request.m_magic, request.m_expiration, request.m_arrow_color, request.m_error);
    }
-   /*
-   void Init(const MQLOrder& order)
+   
+   void Init()
    {
-      Init(order.m_symbol, order.m_cmd, order.m_volume, order.m_price, order.m_slippage, order.m_stoploss, order.m_takeprofit, order.m_comment, order.m_magic, order.m_expiration, order.m_arrow_color, 0);
+      MqlTick tick;
+      Init(NULL, 0, 0, 0, tick, 0, 0, 0, 0, 0);
    }
-   */
 };
 
 struct MQLOrder
@@ -99,6 +99,10 @@ struct MQLOrder
    void Init(const MQLRequestOpen& request)
    {
       Init(0, request.m_symbol, request.m_cmd, request.m_volume, request.m_price, request.m_slippage, request.m_stoploss, request.m_takeprofit, request.m_comment, request.m_magic, request.m_expiration, request.m_arrow_color);
+   }
+   void Init()
+   {
+      Init(0, NULL, 0, 0, 0, 0, 0, 0);
    }
 };
 

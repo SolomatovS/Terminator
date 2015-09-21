@@ -79,7 +79,7 @@ protected:
       double spreadCurrent = NormalizeDouble(his.MQLTick.ask - his.MQLTick.bid, 5);
       double spreadBefore = NormalizeDouble(his.MQLTickBefore.ask - his.MQLTickBefore.bid, 5);
       double spread = (spreadCurrent + spreadBefore) / 2;
-      double calculatedAsk = (alien.MQLTick.ask - alien.MQLTick.bid) + spread / 2;
+      double calculatedAsk = (alien.MQLTick.ask + alien.MQLTick.bid) / 2 + spread / 2;
       double clculatedBid = calculatedAsk - spread;
       
       double pointDeviationBuy   = clculatedBid - his.MQLTick.ask;
@@ -103,7 +103,7 @@ protected:
       double spreadCurrent = NormalizeDouble(his.MQLTick.ask - his.MQLTick.bid, 5);
       double spreadBefore = NormalizeDouble(his.MQLTickBefore.ask - his.MQLTickBefore.bid, 5);
       double spread = (spreadCurrent + spreadBefore) / 2;
-      double calculatedAsk = (alien.MQLTick.ask - alien.MQLTick.bid) + spread / 2;
+      double calculatedAsk = (alien.MQLTick.ask + alien.MQLTick.bid) / 2 + spread / 2;
       double clculatedBid = calculatedAsk - spread;
       double koeffBuy = 0; double koeffSell = 0;
       if (NormalizeDouble(spread, 5) > 0)
@@ -403,9 +403,9 @@ protected:
    }
    virtual void ActionStopQuotes(SData& his, SData& alien)
    {
-      MQLRequestOpen request; FillRequest(request, his, alien);
+      MQLRequestOpen request; request.Init(); FillRequest(request, his, alien);
       MQLRequestOpen try[];
-      MQLOrder order;
+      MQLOrder order; order.Init();
       
       bool result = m_trader.OpenOrder(request,
                                        order,
