@@ -182,6 +182,22 @@ private:
                }
                if (CheckPointer(dHunter) == POINTER_DYNAMIC)  delete dHunter;
                
+               JSONObject* amir = managers.getObject("Amir");
+               if (amir != NULL)
+               {
+                  // Amir ENABLER
+                  result = amir.getBool("Enabler", monitor.m_managers.m_amir.m_enabler);
+                  if (!result)
+                  {
+                     Print(__FUNCTION__, ": not parse 'Defaults:Monitor:Managers:Amir:Enabler'. stop parsing.");
+                  }
+               }
+               else
+               {
+                  Print(__FUNCTION__, ": not parse 'Defaults:Monitor:Managers:Amir'. stop parsing.");
+               }
+               if (CheckPointer(amir) == POINTER_DYNAMIC)  delete amir;
+               
                JSONObject* stopQuotesNotificator = managers.getObject("StopQuotesNotificator");
                if (stopQuotesNotificator != NULL)
                {

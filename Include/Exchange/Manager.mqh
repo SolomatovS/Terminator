@@ -403,7 +403,8 @@ protected:
    }
    virtual void ActionStopQuotes(SData& his, SData& alien)
    {
-      MQLRequestOpen request; request.Init(); FillRequest(request, his, alien);
+      MQLRequestOpen request; request.Init();
+      FillRequest(request, his, alien);
       MQLRequestOpen try[];
       MQLOrder order; order.Init();
       
@@ -415,7 +416,7 @@ protected:
                                        m_requestPriceCorrect,
                                        m_requestStoplossCorrect,
                                        m_requestTakeprofitCorrect);
-   
+      
       if (result)
       {
          Print(__FUNCTION__, ": Opened order #", order.m_ticket, "; cmd ", request.m_cmd, "; price ", DoubleToString(order.m_price, 5), ";");
@@ -436,6 +437,7 @@ private:
       request.m_cmd = FillRequestCMD(his, alien);
       request.m_symbol = CharArrayToString(his.TSymbol);
       FillRequestVolume(request.m_volume);
+      SymbolInfoTick(request.m_symbol, request.m_tick);
       FillRequestPrice(request.m_tick, request.m_cmd, request.m_price);
       request.m_magic = m_magic;
       request.m_slippage = 0;

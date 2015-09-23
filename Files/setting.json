@@ -56,7 +56,12 @@
   "Monitors": [
     {
       "SymbolTerminal": "EURUSDi",
-      "SymbolMemory":   "EURUSD"
+      "SymbolMemory":   "EURUSD",
+      "Managers": {
+        "Amir": {
+          "Enabler": true
+        }
+      },
     }
   ]
 }
