@@ -458,7 +458,7 @@ private:
       if (cmd == OP_BUY)  price = tick.ask;
       if (cmd == OP_SELL) price = tick.bid;
    }
-   void FillRequestVolume(double volume)
+   void FillRequestVolume(double& volume)
    {
       volume = 0.01;
    }

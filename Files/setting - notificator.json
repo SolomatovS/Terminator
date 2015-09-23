@@ -17,8 +17,8 @@
             },
             "MinSpreadsDeviation": {
               "Enabler": true,
-              "DeviationBuy": 3,
-              "DeviationSell": 3
+              "DeviationBuy": 1,
+              "DeviationSell": 1
             }
           },
           "Notifications": {

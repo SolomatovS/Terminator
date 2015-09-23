@@ -57,22 +57,6 @@
     {
       "SymbolTerminal": "EURUSDi",
       "SymbolMemory":   "EURUSD"
-    },
-    {
-      "SymbolTerminal": "GBPUSDi",
-      "SymbolMemory":   "GBPUSD"
-    },
-    {
-      "SymbolTerminal": "USDJPYi",
-      "SymbolMemory":   "USDJPY"
-    },
-    {
-      "SymbolTerminal": "AUDUSDi",
-      "SymbolMemory":   "AUDUSD"
-    },
-    {
-      "SymbolTerminal": "USDCADi",
-      "SymbolMemory":   "USDCAD"
     }
   ]
 }
