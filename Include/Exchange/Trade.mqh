@@ -33,6 +33,11 @@ struct MQLRequestClose
    {
       Init(request.m_ticket, request.m_lots, request.m_price, request.m_tick, request.m_executionPrice, request.m_executionMicrosecond, request.m_slippage, request.m_opposite, request.m_arraow_color, request.m_error);
    }
+   void Init()
+   {
+      MqlTick tick;
+      Init(0, 0, 0, tick, 0, 0, 0, 0);
+   }
 };
 
 struct MQLRequestOpen
@@ -431,7 +436,7 @@ public:
       return result;
    }
    
-   static bool CloseOrDeleteOrder(const MQLRequestClose& request, MQLRequestClose& requestTry[], int countTryLimit = 5, bool requestPriceCorrect = true, bool requestVolumeCorrect = true)
+   static bool CloseOrDeleteOrder(const MQLRequestClose& request, MQLRequestClose& requestTry[], int countTryLimit = 5, bool requestVolumeCorrect = true, bool requestPriceCorrect = true)
    {
       ulong timeOpenPosition = GetMicrosecondCount(); Print(__FUNCTION__, ": Start");
       ulong timeExecution = 0; string error_description = NULL;
@@ -458,7 +463,10 @@ public:
                if (requestTry[index].m_opposite > 0)
                {
                   timeExecution = GetMicrosecondCount();
-                  result = OrderCloseBy(requestTry[index].m_ticket, requestTry[index].m_opposite, requestTry[index].m_arraow_color);
+                  result = OrderCloseBy(
+                     requestTry[index].m_ticket,
+                     requestTry[index].m_opposite,
+                     requestTry[index].m_arraow_color);
                   timeExecution = (GetMicrosecondCount() - timeExecution);
                   requestTry[index].m_executionMicrosecond = timeExecution;
                   
@@ -487,7 +495,12 @@ public:
                   if (!CheckAndCorrectRequest(requestTry[index], OrderSymbol(), OrderType(), OrderLots(), requestPriceCorrect, requestVolumeCorrect))   break;
                   
                   timeExecution = GetMicrosecondCount();
-                  result = OrderClose(requestTry[index].m_ticket, requestTry[index].m_lots, requestTry[index].m_price, requestTry[index].m_slippage, requestTry[index].m_arraow_color);
+                  result = OrderClose(
+                     requestTry[index].m_ticket,
+                     NormalizeDouble(requestTry[index].m_lots, 2),
+                     NormalizeDouble(requestTry[index].m_price, 5),
+                     requestTry[index].m_slippage,
+                     requestTry[index].m_arraow_color);
                   timeExecution = (GetMicrosecondCount() - timeExecution);
                   requestTry[index].m_executionMicrosecond = timeExecution;
                   
@@ -538,7 +551,9 @@ public:
                }
                
                timeExecution = GetMicrosecondCount();
-               result = OrderDelete(requestTry[index].m_ticket, requestTry[index].m_arraow_color);
+               result = OrderDelete(
+                  requestTry[index].m_ticket,
+                  requestTry[index].m_arraow_color);
                timeExecution = (GetMicrosecondCount() - timeExecution);
                requestTry[index].m_executionMicrosecond = timeExecution;
                

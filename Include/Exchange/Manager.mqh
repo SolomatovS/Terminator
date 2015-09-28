@@ -63,6 +63,15 @@ public:
    void Enable(bool enabler = true) { m_enabler = enabler; }
 };
 
+void CalculateTick(SData& his, SData& alien, double& calculatedAsk, double& clculatedBid)
+{
+   double spreadCurrent = NormalizeDouble(his.MQLTick.ask - his.MQLTick.bid, 5);
+   double spreadBefore = NormalizeDouble(his.MQLTickBefore.ask - his.MQLTickBefore.bid, 5);
+   double spread = (spreadCurrent + spreadBefore) / 2;
+   calculatedAsk = (alien.MQLTick.ask + alien.MQLTick.bid) / 2 + spread / 2;
+   clculatedBid = calculatedAsk - spread;
+}
+
 // Filter Deviation point size
 class MinPointsDeviation : Filter
 {
@@ -76,13 +85,10 @@ private:
 protected:
    virtual bool VCheck(SData &his, SData &alien)
    {
-      double spreadCurrent = NormalizeDouble(his.MQLTick.ask - his.MQLTick.bid, 5);
-      double spreadBefore = NormalizeDouble(his.MQLTickBefore.ask - his.MQLTickBefore.bid, 5);
-      double spread = (spreadCurrent + spreadBefore) / 2;
-      double calculatedAsk = (alien.MQLTick.ask + alien.MQLTick.bid) / 2 + spread / 2;
-      double clculatedBid = calculatedAsk - spread;
+      double calculatedBid, calculatedAsk;
+      CalculateTick(his, alien, calculatedAsk, calculatedBid);
       
-      double pointDeviationBuy   = clculatedBid - his.MQLTick.ask;
+      double pointDeviationBuy   = calculatedBid - his.MQLTick.ask;
       double pointDeviationSell  = his.MQLTick.bid - calculatedAsk;
       return (pointDeviationBuy > m_buyDeviation || pointDeviationSell > m_sellDeviation);
    }
@@ -103,12 +109,13 @@ protected:
       double spreadCurrent = NormalizeDouble(his.MQLTick.ask - his.MQLTick.bid, 5);
       double spreadBefore = NormalizeDouble(his.MQLTickBefore.ask - his.MQLTickBefore.bid, 5);
       double spread = (spreadCurrent + spreadBefore) / 2;
-      double calculatedAsk = (alien.MQLTick.ask + alien.MQLTick.bid) / 2 + spread / 2;
-      double clculatedBid = calculatedAsk - spread;
+      double calculatedBid, calculatedAsk;
+      CalculateTick(his, alien, calculatedAsk, calculatedBid);
+      
       double koeffBuy = 0; double koeffSell = 0;
       if (NormalizeDouble(spread, 5) > 0)
       {
-         koeffBuy  = (clculatedBid - his.MQLTick.ask) / spread;
+         koeffBuy  = (calculatedBid - his.MQLTick.ask) / spread;
          koeffSell = (his.MQLTick.bid - calculatedAsk) / spread;
       }
       return (koeffBuy > m_buyDeviation || koeffSell > m_sellDeviation);
@@ -151,10 +158,12 @@ class DeviationQuotes: Manager
 protected:
    Filter*        m_filters[];
    TIMEOUT        m_timeOutSettings;
+   bool           m_logger;
    
 public:
-   DeviationQuotes(FilterConfigurator* filterConfigurator, TIMEOUT& timeOutSettings , bool enabler = true) : Manager(enabler)
+   DeviationQuotes(FilterConfigurator* filterConfigurator, TIMEOUT& timeOutSettings, bool logger = true , bool enabler = true) : Manager(enabler)
    {
+      m_logger = logger;
       filterConfigurator.FilterInit(m_filters);
       m_timeOutSettings.Init(timeOutSettings);
    }
@@ -171,19 +180,28 @@ public:
 protected:
    virtual void VWork(SData& datas[], int index)
    {
+      Log(datas, index);
       for(int i = 0; i < ArraySize(datas); i++)
       {
          if (i == index) continue;
          
          if(CheckStopQuotes(datas[index], datas[i]))
          {
-            Action(datas[index], datas[i]);
+            ActionStopQuotes(datas[index], datas[i]);
+         }
+         else
+         {
+            ActionNoStopQuotes(datas[index], datas[i]);
          }
       }
    }
-   virtual void Action(SData& his, SData& alien)
+   virtual void ActionStopQuotes(SData& his, SData& alien)
    {
-      //OnNotification(Log(datas[index], datas[i]));
+      
+   }
+   virtual void ActionNoStopQuotes(SData& his, SData& alien)
+   {
+      
    }
    
    bool CheckStopQuotes(SData &his, SData &alien)
@@ -228,8 +246,7 @@ private:
    
    bool ExpertTimeOut(SData& alien)
    {
-      if (!m_timeOutSettings.m_enabler)   return false;
-      return (TimeLocal() - alien.LastUpdateExpert) > m_timeOutSettings.m_timeOutExpertSeconds;
+      return (TimeGMT() - alien.LastUpdateExpert) > m_timeOutSettings.m_timeOutExpertSeconds;
    }
    
    bool TradeAllowed(SData& his, SData& alien)
@@ -248,41 +265,19 @@ private:
       }
       return result;
    }
-
-protected:
-   string StopLog(SData &his, SData &alien)
+   void Log(SData& datas[], int index)
    {
+      if (!m_logger) return;
       
-      double pointBuy  = alien.MQLTick.bid - his.MQLTick.ask;
-      double pointSell = his.MQLTick.bid - alien.MQLTick.ask;
-      double KBuy  = (alien.MQLTick.bid - his.MQLTick.ask) / (his.MQLTick.ask - his.MQLTick.bid);// m_checker.KBuy (alien.MQLTick.bid, his.MQLTick.ask, his.MQLTick.bid);
-      double KSell = (his.MQLTick.ask - alien.MQLTick.bid) / (his.MQLTick.ask - his.MQLTick.bid);//m_checker.KSell(alien.MQLTick.ask, his.MQLTick.ask, his.MQLTick.bid);
-      double kDiff = KBuy > KSell ? KBuy : KSell;
-      int OP = KBuy > KSell ? OP_BUY : OP_SELL;
-      //m_checker.Check(KBuy, KSell, kDiff, OP);
-      double points;
-      string textOP = NULL;
-      if (OP == OP_BUY)
+      string m_log = NULL;
+      for(int i = 0; i < ArraySize(datas); i++)
       {
-         points = pointBuy;
-         textOP = "BUY";
+         if (i == index) continue;
+         m_log += Log(datas[index], datas[i]);
       }
-      else
-      {
-         points = pointSell;
-         textOP = "SELL";
-      }
-      
-      return StringConcatenate(
-         "STOP ", CharArrayToString(his.TSymbol), "\n",
-         textOP, ": ", "+ ", DoubleToString(kDiff, 2), " sp. ( ", DoubleToString(points, 5), " p. )", "\n",
-         CharArrayToString(alien.Terminal.Company)
-      );
-      
-      return NULL;
+      Comment(m_log);
    }
-   
-   
+protected:
    string Log(SData &his, SData &alien)
    {
       string company = CharArrayToString(alien.Terminal.Company);
@@ -324,8 +319,8 @@ protected:
    Notification*  m_notifications[];
    
 public:
-   StopQuotesNotificator(NotificationConfigurator* notificationConfigurator, FilterConfigurator* filterConfigurator, TIMEOUT& timeOutSettings , bool enabler = true) :
-      DeviationQuotes(filterConfigurator, timeOutSettings, enabler)
+   StopQuotesNotificator(NotificationConfigurator* notificationConfigurator, FilterConfigurator* filterConfigurator, TIMEOUT& timeOutSettings, bool logger = true, bool enabler = true) :
+      DeviationQuotes(filterConfigurator, timeOutSettings, logger, enabler)
    {
       notificationConfigurator.NotificationInit(m_notifications);
    }
@@ -340,9 +335,9 @@ public:
       }
    }
 protected:
-   virtual void Action(SData& his, SData& alien)
+   virtual void AcrtionStopQuotes(SData& his, SData& alien)
    {
-      OnNotification(Log(his, alien));
+      OnNotification(StopLog(his, alien));
    }
    
    void OnNotification(string text)
@@ -355,6 +350,44 @@ protected:
             m_notifications[i].Send();
          }
       }
+   }
+
+protected:
+   string StopLog(SData &his, SData &alien)
+   {
+      double spreadCurrent = NormalizeDouble(his.MQLTick.ask - his.MQLTick.bid, 5);
+      double spreadBefore = NormalizeDouble(his.MQLTickBefore.ask - his.MQLTickBefore.bid, 5);
+      double spread = (spreadCurrent + spreadBefore) / 2;
+      double calculatedBid, calculatedAsk;
+      CalculateTick(his, alien, calculatedAsk, calculatedBid);
+      
+      double koeffBuy = 0; double koeffSell = 0;
+      if (NormalizeDouble(spread, 5) > 0)
+      {
+         koeffBuy  = (calculatedBid - his.MQLTick.ask) / spread;
+         koeffSell = (his.MQLTick.bid - calculatedAsk) / spread;
+      }
+      double kDiff = koeffBuy > koeffSell ? koeffBuy : koeffSell;
+      int OP = koeffBuy > koeffSell ? OP_BUY : OP_SELL;
+      //m_checker.Check(KBuy, KSell, kDiff, OP);
+      double points;
+      string textOP = NULL;
+      if (OP == OP_BUY)
+      {
+         points = (calculatedBid - his.MQLTick.ask);
+         textOP = "BUY";
+      }
+      else
+      {
+         points = (his.MQLTick.bid - calculatedAsk);
+         textOP = "SELL";
+      }
+      
+      return StringConcatenate(
+         "STOP ", CharArrayToString(his.TSymbol), DoubleToString(his.TimeOutQuote * 0.000001, 1), " sec.\n",
+         textOP, ": ", "+ ", DoubleToString(kDiff, 2), " sp. ( ", DoubleToString(points, 5), " p. )", "\n",
+         CharArrayToString(alien.Terminal.Company)
+      );
    }
 };
 
@@ -374,8 +407,8 @@ class DHunter : DeviationQuotes
    int      m_tryOpenCount;
    
 public:
-   DHunter(FilterConfigurator* filterConfigurator, TIMEOUT& timeOutSettings , bool enabler = true) :
-      DeviationQuotes(filterConfigurator, timeOutSettings, enabler)
+   DHunter(FilterConfigurator* filterConfigurator, TIMEOUT& timeOutSettings, bool logger = true , bool enabler = true) :
+      DeviationQuotes(filterConfigurator, timeOutSettings, logger, enabler)
    {
       m_requestVolumeCorrect = false;
       m_requestPriceCorrect = false;
@@ -385,24 +418,25 @@ public:
       m_magic = 111;
    }
 protected:
-   virtual void VWork(SData& datas[], int index)
-   {
-      for(int i = 0; i < ArraySize(datas); i++)
-      {
-         if (i == index) continue;
-         
-         if(CheckStopQuotes(datas[index], datas[i]))
-         {
-            ActionStopQuotes(datas[index], datas[i]);
-         }
-         else
-         {
-            ActionNoStopQuotes(datas[index], datas[i]);
-         }
-      }
-   }
    virtual void ActionStopQuotes(SData& his, SData& alien)
    {
+      int total = OrdersTotal();
+      string symbol = Symbol();
+      bool isOpened = false;
+      for(int i = 0; i < OrdersTotal(); i++)
+      {
+         if (OrderSelect(i, SELECT_BY_POS, MODE_TRADES))
+         {
+            if (OrderSymbol() == symbol)
+            {
+               isOpened = true; break;
+            }
+         }
+      }
+      if (isOpened)  return;
+      
+      if (his.TimeOutQuote > alien.TimeOutQuote)   return;
+      
       MQLRequestOpen request; request.Init(); FillRequest(request, his, alien);
       MQLRequestOpen try[];
       MQLOrder order; order.Init();
@@ -415,7 +449,7 @@ protected:
                                        m_requestPriceCorrect,
                                        m_requestStoplossCorrect,
                                        m_requestTakeprofitCorrect);
-   
+      
       if (result)
       {
          Print(__FUNCTION__, ": Opened order #", order.m_ticket, "; cmd ", request.m_cmd, "; price ", DoubleToString(order.m_price, 5), ";");
@@ -427,7 +461,31 @@ protected:
    }
    virtual void ActionNoStopQuotes(SData& his, SData& alien)
    {
+      int total = OrdersTotal();
+      for(int i = 0; i < OrdersTotal(); i++)
+      {
+         if (OrderSelect(i, SELECT_BY_POS, MODE_TRADES))
+         {
+            MQLRequestClose request; request.Init();
+            FillRequest(request, OrderTicket(), his);
+            MQLRequestClose try[];
+            
+            bool result = m_trader.CloseOrDeleteOrder(request,
+                                       try,
+                                       m_tryOpenCount,
+                                       m_requestVolumeCorrect,
+                                       m_requestPriceCorrect);
       
+            if (result)
+            {
+               Print(__FUNCTION__, ": Closed order #", OrderTicket(), "; cmd ", OrderType(), "; price ", DoubleToString(OrderClosePrice(), 5), ";");
+            }
+            else
+            {
+               
+            }
+         }
+      }
    }
 
 private:
@@ -439,6 +497,18 @@ private:
       FillRequestPrice(request.m_tick, request.m_cmd, request.m_price);
       request.m_magic = m_magic;
       request.m_slippage = 0;
+   }
+   
+   void FillRequest(MQLRequestClose& request, int ticket, SData& his)
+   {
+      if (OrderSelect(ticket, SELECT_BY_TICKET))
+      {
+         request.m_ticket = ticket;
+         request.m_lots = OrderLots();
+         FillRequestPrice(request.m_tick, OrderType(), request.m_price);
+         request.m_slippage = 0;
+      }
+      
    }
    
    int FillRequestCMD(SData& his, SData& alien)

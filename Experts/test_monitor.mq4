@@ -40,9 +40,17 @@ void OnTick()
 {
    while(!IsStopped())
    {
+      ulong count = GetMicrosecondCount();
+      
       RefreshRates();
-      MainExpert.Working();                        // MAIN WORKING EXPERTS
-      Sleep(Config.m_updateMilliSecondsExpert);    // SLEEP EXPERTS
+      MainExpert.Working();   // MAIN WORKING EXPERTS
+      
+      count = GetMicrosecondCount() - count;
+      
+      if (count * 0.001 < Config.m_updateMilliSecondsExpert)
+      {
+         Sleep(Config.m_updateMilliSecondsExpert - count * 0.001);    // SLEEP EXPERTS
+      }
    }
 }
 //+------------------------------------------------------------------+
