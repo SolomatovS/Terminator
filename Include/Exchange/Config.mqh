@@ -83,16 +83,10 @@ private:
                      {
                         MONITOR cash; cash.Init(defaultMonitor);
                         ParseMonitor(monitor, cash);
-                        if (!SymbolSelect(cash.m_symbolTerminal, false))
+                        if (Symbol() == cash.m_symbolTerminal)
                         {
-                           if (!SymbolSelect(cash.m_symbolTerminal, true))
-                           {
-                              continue;
-                           }
+                           setting.m_monitor.Init(cash);
                         }
-                        
-                        int index = ArrayResize(setting.m_monitors, ArraySize(setting.m_monitors) + 1) - 1;
-                        setting.m_monitors[index].Init(cash);
                      }
                   }
                }
