@@ -33,6 +33,11 @@ struct MQLRequestClose
    {
       Init(request.m_ticket, request.m_lots, request.m_price, request.m_tick, request.m_executionPrice, request.m_executionMicrosecond, request.m_slippage, request.m_opposite, request.m_arraow_color, request.m_error);
    }
+   void Init()
+   {
+      MqlTick tick;
+      Init(0, 0, 0, tick, 0, 0, 0, 0);
+   }
 };
 
 struct MQLRequestOpen
@@ -249,6 +254,8 @@ protected:
       double point = SymbolInfoDouble(request.m_symbol, SYMBOL_POINT);
       double minstoplevel = SymbolInfoInteger(request.m_symbol, SYMBOL_TRADE_STOPS_LEVEL) * point;
       double spread = request.m_tick.ask - request.m_tick.bid;
+      if (request.m_cmd == OP_BUY)  request.m_price = request.m_tick.ask;
+      if (request.m_cmd == OP_SELL) request.m_price = request.m_tick.bid;
       if (!CheckAndCorrectVolume(request.m_symbol, request.m_volume, requestVolumeCorrect))   return false;
       if (!CheckAndCorrectPrice(request.m_cmd, request.m_tick.ask, request.m_tick.bid, minstoplevel, requestPriceCorrect, request.m_price, request.m_error)) return false;
       
@@ -272,8 +279,23 @@ protected:
    {
       double point = SymbolInfoDouble(orderSymbol, SYMBOL_POINT);
       double minstoplevel = SymbolInfoInteger(orderSymbol, SYMBOL_TRADE_STOPS_LEVEL) * point;
+      int cmd;
+      switch(orderCmd)
+      {
+         case OP_BUY: cmd = OP_SELL; break;
+         case OP_SELL: cmd = OP_BUY; break;
+      }
       
-      if (!CheckAndCorrectPrice(orderCmd, request.m_tick.ask, request.m_tick.bid, minstoplevel, requestPriceCorrect, request.m_price, request.m_error)) return false;
+      if (cmd == OP_BUY)
+      {
+         request.m_price = SymbolInfoDouble(orderSymbol, SYMBOL_ASK);
+      }
+      if (cmd == OP_SELL)
+      {
+         request.m_price = SymbolInfoDouble(orderSymbol, SYMBOL_BID);
+      }
+      
+      if (!CheckAndCorrectPrice(cmd, request.m_tick.ask, request.m_tick.bid, minstoplevel, requestPriceCorrect, request.m_price, request.m_error)) return false;
       if (orderLots < request.m_lots || request.m_lots <= 0)
       {
          if (requestVolumeCorrect)
@@ -397,6 +419,8 @@ public:
             {
                case ERR_TRADE_TIMEOUT: 
                case ERR_INVALID_PRICE:
+               Print(__FUNCTION__, ": Current ask: ", requestTry[index].m_tick.ask, ", Current bid: ", requestTry[index].m_tick.bid, ", request price:", requestTry[index].m_price);
+                        break;
                case ERR_INVALID_STOPS:
                case ERR_PRICE_CHANGED:
                case ERR_OFF_QUOTES:
@@ -431,7 +455,7 @@ public:
       return result;
    }
    
-   static bool CloseOrDeleteOrder(const MQLRequestClose& request, MQLRequestClose& requestTry[], int countTryLimit = 5, bool requestPriceCorrect = true, bool requestVolumeCorrect = true)
+   static bool CloseOrDeleteOrder(const MQLRequestClose& request, MQLRequestClose& requestTry[], int countTryLimit = 5, bool requestVolumeCorrect = true, bool requestPriceCorrect = true)
    {
       ulong timeOpenPosition = GetMicrosecondCount(); Print(__FUNCTION__, ": Start");
       ulong timeExecution = 0; string error_description = NULL;
@@ -457,18 +481,29 @@ public:
             {
                if (requestTry[index].m_opposite > 0)
                {
-                  timeExecution = GetMicrosecondCount();
-                  result = OrderCloseBy(requestTry[index].m_ticket, requestTry[index].m_opposite, requestTry[index].m_arraow_color);
-                  timeExecution = (GetMicrosecondCount() - timeExecution);
-                  requestTry[index].m_executionMicrosecond = timeExecution;
+                  if (OrderSelect(requestTry[index].m_ticket, SELECT_BY_TICKET))
+                  {
+                     timeExecution = GetMicrosecondCount();
+                     result = OrderCloseBy(
+                        requestTry[index].m_ticket,
+                        requestTry[index].m_opposite,
+                        requestTry[index].m_arraow_color);
+                     timeExecution = (GetMicrosecondCount() - timeExecution);
+                     requestTry[index].m_executionMicrosecond = timeExecution;
+                  }
                   
                   countTryLimit--;
                   
                   if (result)
                   {
-                     requestTry[index].m_executionPrice = OrderClosePrice();
-                     OrderSelect(requestTry[index].m_opposite, SELECT_BY_TICKET);
-                     requestTry[index].m_price = OrderClosePrice();
+                     if (OrderSelect(requestTry[index].m_ticket, SELECT_BY_TICKET))
+                     {
+                        requestTry[index].m_executionPrice = OrderClosePrice();
+                     }
+                     if (OrderSelect(requestTry[index].m_opposite, SELECT_BY_TICKET))
+                     {
+                        requestTry[index].m_price = OrderClosePrice();
+                     }
                      Print(__FUNCTION__, ": Order #", requestTry[index].m_ticket, " closed by #", requestTry[index].m_opposite, "; execution time: ", DoubleToString(timeExecution / 1000, 3), " milliseconds");
                   }
                   else
@@ -486,24 +521,38 @@ public:
                {
                   if (!CheckAndCorrectRequest(requestTry[index], OrderSymbol(), OrderType(), OrderLots(), requestPriceCorrect, requestVolumeCorrect))   break;
                   
-                  timeExecution = GetMicrosecondCount();
-                  result = OrderClose(requestTry[index].m_ticket, requestTry[index].m_lots, requestTry[index].m_price, requestTry[index].m_slippage, requestTry[index].m_arraow_color);
-                  timeExecution = (GetMicrosecondCount() - timeExecution);
-                  requestTry[index].m_executionMicrosecond = timeExecution;
-                  
+                  if (OrderSelect(requestTry[index].m_ticket, SELECT_BY_TICKET))
+                  {
+                     timeExecution = GetMicrosecondCount();
+                     result = OrderClose(
+                        requestTry[index].m_ticket,
+                        NormalizeDouble(requestTry[index].m_lots, 2),
+                        NormalizeDouble(requestTry[index].m_price, digits),
+                        requestTry[index].m_slippage,
+                        requestTry[index].m_arraow_color);
+                     timeExecution = (GetMicrosecondCount() - timeExecution);
+                     requestTry[index].m_executionMicrosecond = timeExecution;
+                  }
                   countTryLimit--;
                   
                   if (result)
                   {
-                     requestTry[index].m_executionPrice = OrderOpenPrice();
-                     double _slippage = 0;
-                     if (type == OP_BUY || type == OP_BUYLIMIT || type == OP_BUYSTOP)
+                     if (OrderSelect(request.m_ticket, SELECT_BY_TICKET))
                      {
-                        _slippage = requestTry[index].m_price - requestTry[index].m_executionPrice;
-                     }
-                     else  _slippage = requestTry[index].m_executionPrice - requestTry[index].m_price;
+                        requestTry[index].m_executionPrice = OrderClosePrice();
+                        double _slippage = 0;
+                        if (type == OP_BUY || type == OP_BUYLIMIT || type == OP_BUYSTOP)
+                        {
+                           _slippage = requestTry[index].m_price - requestTry[index].m_executionPrice;
+                        }
+                        else  _slippage = requestTry[index].m_executionPrice - requestTry[index].m_price;
                      
-                     Print(__FUNCTION__, ": OK; Order #", requestTry[index].m_ticket, "; closed; execution time: ", DoubleToString(timeExecution / 1000, 3), " milliseconds;", " Request price: ", DoubleToString(requestTry[index].m_price, digits), "; Execution Price: ", DoubleToString(requestTry[index].m_executionPrice, digits), "; Slippage: ", DoubleToString(_slippage, digits));
+                        Print(__FUNCTION__, ": OK; Order #", requestTry[index].m_ticket, "; closed; execution time: ", DoubleToString(timeExecution / 1000, 3), " milliseconds;", " Request price: ", DoubleToString(requestTry[index].m_price, digits), "; Execution Price: ", DoubleToString(requestTry[index].m_executionPrice, digits), "; Slippage: ", DoubleToString(_slippage, digits));
+                     }
+                     else
+                     {
+                        Print(__FUNCTION__, ": OK; Order #", requestTry[index].m_ticket, "; closed; execution time: ", DoubleToString(timeExecution / 1000, 3), " milliseconds;", " Request price: ", DoubleToString(requestTry[index].m_price, digits));
+                     }
                      result = true;
                   }
                   else
@@ -516,9 +565,14 @@ public:
                      {
                         case ERR_TRADE_TIMEOUT: 
                         case ERR_INVALID_PRICE:
+                           Print(__FUNCTION__, ": Current ask: ", requestTry[index].m_tick.ask, ", Current bid: ", requestTry[index].m_tick.bid, ", request price:", requestTry[index].m_price);
+                        break;
                         case ERR_INVALID_STOPS:
                         case ERR_PRICE_CHANGED:
                         case ERR_OFF_QUOTES:
+                        case ERR_INVALID_TRADE_PARAMETERS:
+                           Print(__FUNCTION__, ": Ticket: ", requestTry[index].m_ticket, ", Lots: ", requestTry[index].m_lots, ", Price: ", requestTry[index].m_price, ", Slippage: ", requestTry[index].m_slippage, ", Arrow_color: ", requestTry[index].m_arraow_color);
+                        break;
                         case ERR_REQUOTE: criticalError = false; break;
                         default: criticalError = true;
                      }
@@ -537,16 +591,23 @@ public:
                   requestTry[index].m_price = requestTry[index].m_tick.ask;
                }
                
-               timeExecution = GetMicrosecondCount();
-               result = OrderDelete(requestTry[index].m_ticket, requestTry[index].m_arraow_color);
-               timeExecution = (GetMicrosecondCount() - timeExecution);
-               requestTry[index].m_executionMicrosecond = timeExecution;
-               
+               if (OrderSelect(requestTry[index].m_ticket, SELECT_BY_TICKET))
+               {
+                  timeExecution = GetMicrosecondCount();
+                  result = OrderDelete(
+                     requestTry[index].m_ticket,
+                     requestTry[index].m_arraow_color);
+                  timeExecution = (GetMicrosecondCount() - timeExecution);
+                  requestTry[index].m_executionMicrosecond = timeExecution;
+               }
                countTryLimit--;
                
                if (result)
                {
-                  requestTry[index].m_executionPrice = OrderClosePrice();
+                  if (OrderSelect(requestTry[index].m_ticket, SELECT_BY_TICKET))
+                  {
+                     requestTry[index].m_executionPrice = OrderClosePrice();
+                  }
                   Print(__FUNCTION__, ": Order #", requestTry[index].m_ticket, " deleted; execution time: ", DoubleToString(timeExecution / 1000, 3), " milliseconds");
                   result = true;
                }
