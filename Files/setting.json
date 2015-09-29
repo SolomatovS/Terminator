@@ -76,8 +76,11 @@
       "SymbolTerminal": "EURUSDi",
       "SymbolMemory":   "EURUSD",
       "Managers": {
+        "Amir": {
+          "Enabler": true
+        },
         "DHunter": {
-          "Enabler": true,
+          "Enabler": false,
           "Filters": {
             "MinPointsDeviation": {
               "DeviationBuy": 0.0001,
