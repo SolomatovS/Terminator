@@ -435,7 +435,7 @@ protected:
       }
       if (isOpened)  return;
       
-      if (his.TimeOutQuote > alien.TimeOutQuote)   return;
+      //if (his.TimeOutQuote > alien.TimeOutQuote)   return;
       
       MQLRequestOpen request; request.Init(); FillRequest(request, his, alien);
       MQLRequestOpen try[];
@@ -462,10 +462,12 @@ protected:
    virtual void ActionNoStopQuotes(SData& his, SData& alien)
    {
       int total = OrdersTotal();
-      for(int i = 0; i < OrdersTotal(); i++)
+      for(int i = 0; i < total; i++)
       {
          if (OrderSelect(i, SELECT_BY_POS, MODE_TRADES))
          {
+            if (OrderCloseTime() > 0 || StringCompare(OrderSymbol(), Symbol()) != 0)   continue;
+            
             MQLRequestClose request; request.Init();
             FillRequest(request, OrderTicket(), his);
             MQLRequestClose try[];
@@ -475,10 +477,13 @@ protected:
                                        m_tryOpenCount,
                                        m_requestVolumeCorrect,
                                        m_requestPriceCorrect);
-      
+            
             if (result)
             {
-               Print(__FUNCTION__, ": Closed order #", OrderTicket(), "; cmd ", OrderType(), "; price ", DoubleToString(OrderClosePrice(), 5), ";");
+               if (OrderSelect(OrderTicket(), SELECT_BY_TICKET))
+               {
+                  Print(__FUNCTION__, ": Closed order #", OrderTicket(), "; cmd ", OrderType(), "; price ", DoubleToString(OrderClosePrice(), 5), ";");
+               }
             }
             else
             {
