@@ -291,3 +291,11 @@ Include/Strings/String.mqh
 Include/Tools/DateTime.mqh
 Include/WinUser32.mqh
 Libraries/stdlib.mq4
+Libraries/mqlcache.dat
+Scripts/mqlcache.dat
+
+Experts/mqlcache.dat
+Indicators/Accelerator.mq4
+Indicators/ATR.mq4
+Experts/mqlcache.dat
+Experts/mqlcache.dat

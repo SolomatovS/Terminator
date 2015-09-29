@@ -44,12 +44,12 @@ public:
       {
          result = Parse((JSONObject*)config, setting);
          Print(__FUNCTION__, ": json:");
-         //Print(__FUNCTION__, ": PARSED: " + config.toString());
-         //result = true;
       }
       
       if (CheckPointer(config) == POINTER_DYNAMIC) { delete config; config = NULL; }
       if (CheckPointer(parser) == POINTER_DYNAMIC) { delete parser; parser = NULL; }
+      
+      setting.m_configPath = TerminalPath() + "\\MQL4\\Files\\" + m_filePath;
       
       return result;
    }
@@ -64,7 +64,7 @@ private:
          Print(__FUNCTION__, ": not pase 'UpdateMilliSecondsExpert'. stop parsing."); return result;
       }
       
-      MONITOR defaultMonitor;
+      MONITOR defaultMonitor; defaultMonitor.Init();
       JSONObject* defaults = object.getObject("Defaults");
       if(defaults != NULL)
       {
@@ -73,6 +73,7 @@ private:
          {
             if (ParseMonitor(defaultMonitorJson, defaultMonitor))
             {
+               setting.m_monitor.Init(defaultMonitor);// setting.m_monitor.m_symbolTerminal = Symbol(); setting.m_monitor.m_symbolMemory = Symbol();
                JSONArray* arrayMonitors = object.getArray("Monitors");
                if (arrayMonitors != NULL)
                {
@@ -83,9 +84,12 @@ private:
                      monitor = arrayMonitors.getObject(i);
                      if (monitor != NULL)
                      {
-                        int index = ArrayResize(setting.m_monitors, ArraySize(setting.m_monitors) + 1) - 1;
-                        setting.m_monitors[index].Init(defaultMonitor);
-                        ParseMonitor(monitor, setting.m_monitors[index]);
+                        MONITOR cash; cash.Init(defaultMonitor);
+                        ParseMonitor(monitor, cash);
+                        if (Symbol() == cash.m_symbolTerminal)
+                        {
+                           setting.m_monitor.Init(cash);
+                        }
                      }
                   }
                }
@@ -111,13 +115,131 @@ private:
       return result;
    }
    
+   bool ParseDeviationManager(JSONObject& object, DEVIATION_QUOTES& setting)
+   {
+      // ENABLER
+      bool result = object.getBool("Enabler", setting.m_enabler);
+      if (!result)
+      {
+      	Print(__FUNCTION__, ": not parse 'Defaults:Monitor:Managers:DeviationQuotes:Enabler'. stop parsing.");
+      }
+      
+      // Logger
+      result = object.getBool("Logger", setting.m_logger);
+      if (!result)
+      {
+      	Print(__FUNCTION__, ": not parse 'Defaults:Monitor:Managers:DeviationQuotes:Logger'. stop parsing.");
+      }
+
+   	// STOP QUOTES NOTIFICATOR FILTERS
+   	JSONObject* filters = object.getObject("Filters");
+   	if (filters != NULL)
+   	{
+      	JSONObject* minPointsDeviation = filters.getObject("MinPointsDeviation");
+      	if (minPointsDeviation != NULL)
+      	{
+      		result = minPointsDeviation.getBool("Enabler", setting.m_filters.m_minPointDeviation.m_enabler);
+      		if (!result)
+      		{
+      			Print(__FUNCTION__, ": not parse 'Defaults:Monitor:Managers:DeviationQuotes:Filters:MinPointsDeviation:Enabler'. stop parsing.");
+      		}
+      
+      		result = minPointsDeviation.getDouble("DeviationBuy", setting.m_filters.m_minPointDeviation.m_buyDeviation);
+      		if (!result)
+      		{
+      			Print(__FUNCTION__, ": not parse 'Defaults:Monitor:Managers:DeviationQuotes:Filters:MinPointsDeviation:DeviationBuy'. stop parsing.");
+      		}
+      
+      		result = minPointsDeviation.getDouble("DeviationSell", setting.m_filters.m_minPointDeviation.m_sellDeviation);
+      		if (!result)
+      		{
+      			Print(__FUNCTION__, ": not parse 'Defaults:Monitor:Managers:DeviationQuotes:Filters:MinPointsDeviation:DeviationSell'. stop parsing.");
+      		}
+      	}
+      	else
+      	{
+      		Print(__FUNCTION__, ": not parse 'Defaults:Monitor:Managers:DeviationQuotes:Filters:MinPointsDeviation'. stop parsing.");
+      	}
+      	if (CheckPointer(minPointsDeviation) == POINTER_DYNAMIC)  delete minPointsDeviation;
+      
+      	JSONObject* minSpreadsDeviation = filters.getObject("MinSpreadsDeviation");
+      	if (minSpreadsDeviation != NULL)
+      	{
+      		result = minSpreadsDeviation.getBool("Enabler", setting.m_filters.m_minSpreadDeviation.m_enabler);
+      		if (!result)
+      		{
+      			Print(__FUNCTION__, ": not parse 'Defaults:Monitor:Managers:DeviationQuotes:Filters:MinSpreadsDeviation:Enabler'. stop parsing.");
+      		}
+      
+      		result = minSpreadsDeviation.getDouble("DeviationBuy", setting.m_filters.m_minSpreadDeviation.m_buyDeviation);
+      		if (!result)
+      		{
+      			Print(__FUNCTION__, ": not parse 'Defaults:Monitor:Managers:DeviationQuotes:Filters:MinSpreadsDeviation:DeviationBuy'. stop parsing.");
+      		}
+      
+      		result = minSpreadsDeviation.getDouble("DeviationSell", setting.m_filters.m_minSpreadDeviation.m_sellDeviation);
+      		if (!result)
+      		{
+      			Print(__FUNCTION__, ": not parse 'Defaults:Monitor:Managers:DeviationQuotes:Filters:MinSpreadsDeviation:DeviationSell'. stop parsing.");
+      		}
+      	}
+      	else
+      	{
+      		Print(__FUNCTION__, ": not parse 'Defaults:Monitor:Managers:DeviationQuotes:Filters:MinSpreadsDeviation'. stop parsing.");
+      	}
+      	if (CheckPointer(minSpreadsDeviation) == POINTER_DYNAMIC)  delete minSpreadsDeviation;
+      }
+      else
+      {
+   	   Print(__FUNCTION__, ": not parse 'Defaults:Monitor:Managers:DeviationQuotes:Filters'. stop parsing.");
+      }
+      if (CheckPointer(filters) == POINTER_DYNAMIC)  delete filters;
+   
+   	JSONObject* timeout = object.getObject("TimeOut");
+   	if (timeout != NULL)
+   	{
+      	result = timeout.getBool("Enabler", setting.m_timeOut.m_enabler);
+      	if (!result)
+      	{
+      		Print(__FUNCTION__, ": not parse 'Defaults:Monitor:Managers:DeviationQuotes:TimeOut:Enabler'. stop parsing.");
+      	}
+      
+      	result = timeout.getDouble("TimeOutSeconds", setting.m_timeOut.m_timeOutSeconds);
+      	if (!result)
+      	{
+      		Print(__FUNCTION__, ": not parse 'Defaults:Monitor:Managers:DeviationQuotes:TimeOut:TimeOutSeconds'. stop parsing.");
+      	}
+   	}
+   	else
+   	{
+   		Print(__FUNCTION__, ": not parse 'Defaults:Monitor:Managers:DeviationQuotes:TimeOut'. stop parsing.");
+   	}
+   	
+   	if (CheckPointer(timeout) == POINTER_DYNAMIC)  delete timeout;
+   	return result;
+   }
+   
    bool ParseMonitor(JSONObject& defaultMonitor, MONITOR& monitor)
    {
             // PREFIX
             bool result = defaultMonitor.getString("Prefix", monitor.m_prefix);
             if (!result)
             {
-               Print(__FUNCTION__, ": not pase 'Defaults:Monitor:Prefix'. stop parsing.");
+               Print(__FUNCTION__, ": not parse 'Defaults:Monitor:Prefix'. stop parsing.");
+            }
+            
+            // UTC
+            result = defaultMonitor.getInt("UTC", monitor.m_UTC);
+            if (!result)
+            {
+               Print(__FUNCTION__, ": not parse 'Defaults:Monitor:UTC'. stop parsing.");
+            }
+            
+            // Updater
+            result = defaultMonitor.getBool("Updater", monitor.m_updater);
+            if (!result)
+            {
+               Print(__FUNCTION__, ": not parse 'Defaults:Monitor:Updater'. stop parsing.");
             }
             
             // SymbolMemory
@@ -138,80 +260,34 @@ private:
             JSONObject* managers = defaultMonitor.getObject("Managers");
             if (managers != NULL)
             {
+               JSONObject* dHunter = managers.getObject("DHunter");
+               if (dHunter != NULL)
+               {
+                  ParseDeviationManager(dHunter, monitor.m_managers.m_dHunter);
+               }
+               if (CheckPointer(dHunter) == POINTER_DYNAMIC)   delete dHunter;
+               
+               JSONObject* amir = managers.getObject("Amir");
+               if (amir != NULL)
+               {
+                  // Amir ENABLER
+                  result = amir.getBool("Enabler", monitor.m_managers.m_amir.m_enabler);
+                  if (!result)
+                  {
+                     Print(__FUNCTION__, ": not parse 'Defaults:Monitor:Managers:Amir:Enabler'. stop parsing.");
+                  }
+               }
+               else
+               {
+                  Print(__FUNCTION__, ": not parse 'Defaults:Monitor:Managers:Amir'. stop parsing.");
+               }
+               if (CheckPointer(amir) == POINTER_DYNAMIC)  delete amir;
+               
                JSONObject* stopQuotesNotificator = managers.getObject("StopQuotesNotificator");
                if (stopQuotesNotificator != NULL)
                {
-                  // STOP QUOTES NOTIFICATOR ENABLER
-                  result = stopQuotesNotificator.getBool("Enabler", monitor.m_managers.m_stopQuotesNotificator.m_enabler);
-                  if (!result)
-                  {
-                     Print(__FUNCTION__, ": not parse 'Defaults:Monitor:Managers:StopQuotesNotificator:Enabler'. stop parsing.");
-                  }
-                  
-                  // STOP QUOTES NOTIFICATOR FILTERS
-                  JSONObject* filters = stopQuotesNotificator.getObject("Filters");
-                  if(filters != NULL)
-                  {
-                     JSONObject* minPointsDeviation = filters.getObject("MinPointsDeviation");
-                     if(minPointsDeviation != NULL)
-                     {
-                        result = minPointsDeviation.getBool("Enabler", monitor.m_managers.m_stopQuotesNotificator.m_filters.m_minPointDeviation.m_enabler);
-                        if (!result)
-                        {
-                           Print(__FUNCTION__, ": not parse 'Defaults:Monitor:Managers:StopQuotesNotificator:Filters:MinPointsDeviation:Enabler'. stop parsing.");
-                        }
-                        
-                        result = minPointsDeviation.getDouble("DeviationBuy", monitor.m_managers.m_stopQuotesNotificator.m_filters.m_minPointDeviation.m_buyDeviation);
-                        if (!result)
-                        {
-                           Print(__FUNCTION__, ": not parse 'Defaults:Monitor:Managers:StopQuotesNotificator:Filters:MinPointsDeviation:DeviationBuy'. stop parsing.");
-                        }
-                        
-                        result = minPointsDeviation.getDouble("DeviationSell", monitor.m_managers.m_stopQuotesNotificator.m_filters.m_minPointDeviation.m_sellDeviation);
-                        if (!result)
-                        {
-                           Print(__FUNCTION__, ": not parse 'Defaults:Monitor:Managers:StopQuotesNotificator:Filters:MinPointsDeviation:DeviationSell'. stop parsing.");
-                        }
-                     }
-                     else
-                     {
-                        Print(__FUNCTION__, ": not parse 'Defaults:Monitor:Managers:StopQuotesNotificator:Filters:MinPointsDeviation'. stop parsing.");
-                     }
-                     if (CheckPointer(minPointsDeviation) == POINTER_DYNAMIC)  delete minPointsDeviation;
-                     
-                     JSONObject* minSpreadsDeviation = filters.getObject("MinSpreadsDeviation");
-                     if(minSpreadsDeviation != NULL)
-                     {
-                        result = minSpreadsDeviation.getBool("Enabler", monitor.m_managers.m_stopQuotesNotificator.m_filters.m_minSpreadDeviation.m_enabler);
-                        if (!result)
-                        {
-                           Print(__FUNCTION__, ": not parse 'Defaults:Monitor:Managers:StopQuotesNotificator:Filters:MinSpreadsDeviation:Enabler'. stop parsing.");
-                        }
-                        
-                        result = minSpreadsDeviation.getDouble("DeviationBuy", monitor.m_managers.m_stopQuotesNotificator.m_filters.m_minSpreadDeviation.m_buyDeviation);
-                        if (!result)
-                        {
-                           Print(__FUNCTION__, ": not parse 'Defaults:Monitor:Managers:StopQuotesNotificator:Filters:MinSpreadsDeviation:DeviationBuy'. stop parsing.");
-                        }
-                        
-                        result = minSpreadsDeviation.getDouble("DeviationSell", monitor.m_managers.m_stopQuotesNotificator.m_filters.m_minSpreadDeviation.m_sellDeviation);
-                        if (!result)
-                        {
-                           Print(__FUNCTION__, ": not parse 'Defaults:Monitor:Managers:StopQuotesNotificator:Filters:MinSpreadsDeviation:DeviationSell'. stop parsing.");
-                        }
-                     }
-                     else
-                     {
-                        Print(__FUNCTION__, ": not parse 'Defaults:Monitor:Managers:StopQuotesNotificator:Filters:MinSpreadsDeviation'. stop parsing.");
-                     }
-                     if (CheckPointer(minSpreadsDeviation) == POINTER_DYNAMIC)  delete minSpreadsDeviation;
-                  }
-                  else
-                  {
-                     Print(__FUNCTION__, ": not parse 'Defaults:Monitor:Managers:StopQuotesNotificator:Filters'. stop parsing.");
-                  }
-                  if (CheckPointer(filters) == POINTER_DYNAMIC)  delete filters;
-                  
+                  ParseDeviationManager(stopQuotesNotificator, monitor.m_managers.m_stopQuotesNotificator);
+
                   // STOP QUOTES NOTIFICATOR FILTERS
                   JSONObject* notifications = stopQuotesNotificator.getObject("Notifications");
                   if(notifications != NULL)
@@ -308,27 +384,6 @@ private:
                      Print(__FUNCTION__, ": not parse 'Defaults:Monitor:Managers:StopQuotesNotificator:Notification'. stop parsing.");
                   }
                   if (CheckPointer(notifications) == POINTER_DYNAMIC)  delete notifications;
-                  
-                  JSONObject* timeout = stopQuotesNotificator.getObject("TimeOut");
-                  if(timeout != NULL)
-                  {
-                     result = timeout.getBool("Enabler", monitor.m_managers.m_stopQuotesNotificator.m_timeOut.m_enabler);
-                     if (!result)
-                     {
-                        Print(__FUNCTION__, ": not parse 'Defaults:Monitor:Managers:StopQuotesNotificator:TimeOut:Enabler'. stop parsing.");
-                     }
-                     
-                     result = timeout.getDouble("TimeOutSeconds", monitor.m_managers.m_stopQuotesNotificator.m_timeOut.m_timeOutSeconds);
-                     if (!result)
-                     {
-                        Print(__FUNCTION__, ": not parse 'Defaults:Monitor:Managers:StopQuotesNotificator:TimeOut:TimeOutSeconds'. stop parsing.");
-                     }
-                  }
-                  else
-                  {
-                     Print(__FUNCTION__, ": not parse 'Defaults:Monitor:Managers:StopQuotesNotificator:TimeOut'. stop parsing.");
-                  }
-                  if (CheckPointer(timeout) == POINTER_DYNAMIC)  delete timeout;
                }
                else
                {
@@ -341,7 +396,6 @@ private:
                Print(__FUNCTION__, ": not parse 'Defaults:Monitor:Managers'. stop parsing.");
             }
             if (CheckPointer(managers) == POINTER_DYNAMIC)  delete managers;
-
       return result;
    }
    

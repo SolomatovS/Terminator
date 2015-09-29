@@ -2,10 +2,13 @@
   "UpdateMilliSecondsExpert": 100,
   "Defaults": {
     "Monitor": {
+      "UTC": 2,
+      "Updater": true,
       "Prefix": "Local",
       "Managers": {
-        "StopQuotesNotificator": {
+        "DHunter": {
           "Enabler": true,
+          "Logger": true,
           "Filters": {
             "MinPointsDeviation": {
               "Enabler": true,
@@ -13,10 +16,36 @@
               "DeviationSell": 0.00001
             },
             "MinSpreadsDeviation": {
-              "Enabler": false,
+              "Enabler": true,
+              "DeviationBuy": 1,
+              "DeviationSell": 1
+            }
+          },
+          "TimeOut": {
+            "Enabler": false,
+            "TimeOutSeconds": 5.0,
+            "TimeOutExpertSeconds": 3
+          }
+        },
+        "StopQuotesNotificator": {
+          "Enabler": true,
+          "Logger": false,
+          "Filters": {
+            "MinPointsDeviation": {
+              "Enabler": true,
+              "DeviationBuy": 0.00001,
+              "DeviationSell": 0.00001
+            },
+            "MinSpreadsDeviation": {
+              "Enabler": true,
               "DeviationBuy": 3,
               "DeviationSell": 3
             }
+          },
+          "TimeOut": {
+            "Enabler": false,
+            "TimeOutSeconds": 5.0,
+            "TimeOutExpertSeconds": 3
           },
           "Notifications": {
             "Alert": {
@@ -35,10 +64,6 @@
               "CountLimit": 1,
               "ResetCountMinute": 1.0
             }
-          },
-          "TimeOut": {
-            "Enabler": true,
-            "TimeOutSeconds": 20.0
           }
         }
       },
@@ -48,28 +73,83 @@
   },
   "Monitors": [
     {
+<<<<<<< HEAD
+      "SymbolTerminal": "EURUSD",
+      "SymbolMemory":   "EURUSD",
+      "Managers": {
+        "Amir": {
+          "Enabler": true
+        }
+      },
+=======
       "SymbolTerminal": "EURUSDi",
-      "SymbolMemory":   "EURUSD"
+      "SymbolMemory":   "EURUSD",
+      "Managers": {
+        "DHunter": {
+          "Enabler": true,
+          "Filters": {
+            "MinPointsDeviation": {
+              "DeviationBuy": 0.0001,
+              "DeviationSell": 0.0001
+            }
+          }
+        },
+        "StopQuotesNotificator": {
+          "Filters": {
+            "MinPointsDeviation": {
+              "DeviationBuy": 0.00005,
+              "DeviationSell": 0.00005
+            }
+          }
+        }
+      }
     },
     {
       "SymbolTerminal": "GBPUSDi",
-      "SymbolMemory":   "GBPUSD"
+      "SymbolMemory":   "GBPUSD",
+      "Managers": {
+        "DHunter": {
+          "Enabler": true,
+          "Filters": {
+            "MinPointsDeviation": {
+              "DeviationBuy": 0.00012,
+              "DeviationSell": 0.00012
+            }
+          }
+        },
+        "StopQuotesNotificator": {
+          "Filters": {
+            "MinPointsDeviation": {
+              "DeviationBuy": 0.00012,
+              "DeviationSell": 0.00012
+            }
+          }
+        }
+      }
     },
     {
       "SymbolTerminal": "USDJPYi",
-      "SymbolMemory":   "USDLPY"
-    },
-    {
-      "SymbolTerminal": "AUDUSDi",
-      "SymbolMemory":   "AUDUSD"
-    },
-    {
-      "SymbolTerminal": "NZDUSDi",
-      "SymbolMemory":   "NZDUSD"
-    },
-    {
-      "SymbolTerminal": "USDCADi",
-      "SymbolMemory":   "USDCAD"
+      "SymbolMemory":   "USDJPY",
+      "Managers": {
+        "DHunter": {
+          "Enabler": true,
+          "Filters": {
+            "MinPointsDeviation": {
+              "DeviationBuy": 0.01,
+              "DeviationSell": 0.01
+            }
+          }
+        },
+        "StopQuotesNotificator": {
+          "Filters": {
+            "MinPointsDeviation": {
+              "DeviationBuy": 0.01,
+              "DeviationSell": 0.01
+            }
+          }
+        }
+      }
+>>>>>>> DHunter_create
     }
   ]
 }
