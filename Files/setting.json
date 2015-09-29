@@ -73,15 +73,6 @@
   },
   "Monitors": [
     {
-<<<<<<< HEAD
-      "SymbolTerminal": "EURUSD",
-      "SymbolMemory":   "EURUSD",
-      "Managers": {
-        "Amir": {
-          "Enabler": true
-        }
-      },
-=======
       "SymbolTerminal": "EURUSDi",
       "SymbolMemory":   "EURUSD",
       "Managers": {
@@ -149,7 +140,6 @@
           }
         }
       }
->>>>>>> DHunter_create
     }
   ]
 }
