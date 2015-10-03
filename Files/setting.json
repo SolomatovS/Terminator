@@ -98,7 +98,95 @@
       }
     },
     {
+      "SymbolTerminal": "EURUSDn",
+      "SymbolMemory":   "EURUSD",
+      "Managers": {
+        "DHunter": {
+          "Filters": {
+            "MinPointsDeviation": {
+              "DeviationBuy": 0.00010,
+              "DeviationSell": 0.00010
+            }
+          }
+        },
+        "StopQuotesNotificator": {
+          "Filters": {
+            "MinPointsDeviation": {
+              "DeviationBuy": 0.00005,
+              "DeviationSell": 0.00005
+            }
+          }
+        }
+      }
+    },
+    {
+      "SymbolTerminal": "EURUSD",
+      "SymbolMemory":   "EURUSD",
+      "Managers": {
+        "DHunter": {
+          "Filters": {
+            "MinPointsDeviation": {
+              "DeviationBuy": 0.00010,
+              "DeviationSell": 0.00010
+            }
+          }
+        },
+        "StopQuotesNotificator": {
+          "Filters": {
+            "MinPointsDeviation": {
+              "DeviationBuy": 0.00005,
+              "DeviationSell": 0.00005
+            }
+          }
+        }
+      }
+    },
+    {
       "SymbolTerminal": "GBPUSDi",
+      "SymbolMemory":   "GBPUSD",
+      "Managers": {
+        "DHunter": {
+          "Filters": {
+            "MinPointsDeviation": {
+              "DeviationBuy": 0.00012,
+              "DeviationSell": 0.00012
+            }
+          }
+        },
+        "StopQuotesNotificator": {
+          "Filters": {
+            "MinPointsDeviation": {
+              "DeviationBuy": 0.00012,
+              "DeviationSell": 0.00012
+            }
+          }
+        }
+      }
+    },
+    {
+      "SymbolTerminal": "GBPUSDn",
+      "SymbolMemory":   "GBPUSD",
+      "Managers": {
+        "DHunter": {
+          "Filters": {
+            "MinPointsDeviation": {
+              "DeviationBuy": 0.00012,
+              "DeviationSell": 0.00012
+            }
+          }
+        },
+        "StopQuotesNotificator": {
+          "Filters": {
+            "MinPointsDeviation": {
+              "DeviationBuy": 0.00012,
+              "DeviationSell": 0.00012
+            }
+          }
+        }
+      }
+    },
+    {
+      "SymbolTerminal": "GBPUSD",
       "SymbolMemory":   "GBPUSD",
       "Managers": {
         "DHunter": {
@@ -142,7 +230,117 @@
       }
     },
     {
+      "SymbolTerminal": "USDJPYn",
+      "SymbolMemory":   "USDJPY",
+      "Managers": {
+        "DHunter": {
+          "Filters": {
+            "MinPointsDeviation": {
+              "DeviationBuy": 0.01,
+              "DeviationSell": 0.01
+            }
+          }
+        },
+        "StopQuotesNotificator": {
+          "Filters": {
+            "MinPointsDeviation": {
+              "DeviationBuy": 0.01,
+              "DeviationSell": 0.01
+            }
+          }
+        }
+      }
+    },
+    {
+      "SymbolTerminal": "USDJPY",
+      "SymbolMemory":   "USDJPY",
+      "Managers": {
+        "DHunter": {
+          "Filters": {
+            "MinPointsDeviation": {
+              "DeviationBuy": 0.01,
+              "DeviationSell": 0.01
+            }
+          }
+        },
+        "StopQuotesNotificator": {
+          "Filters": {
+            "MinPointsDeviation": {
+              "DeviationBuy": 0.01,
+              "DeviationSell": 0.01
+            }
+          }
+        }
+      }
+    },
+    {
       "SymbolTerminal": "XAUUSDi",
+      "SymbolMemory":   "XAUUSD",
+      "Managers": {
+        "DHunter": {
+          "Filters": {
+            "MinPointsDeviation": {
+              "DeviationBuy": 0.5,
+              "DeviationSell": 0.5
+            }
+          }
+        },
+        "StopQuotesNotificator": {
+          "Filters": {
+            "MinPointsDeviation": {
+              "DeviationBuy": 0.5,
+              "DeviationSell": 0.5
+            }
+          }
+        }
+      }
+    },
+    {
+      "SymbolTerminal": "XAUUSDn",
+      "SymbolMemory":   "XAUUSD",
+      "Managers": {
+        "DHunter": {
+          "Filters": {
+            "MinPointsDeviation": {
+              "DeviationBuy": 0.5,
+              "DeviationSell": 0.5
+            }
+          }
+        },
+        "StopQuotesNotificator": {
+          "Filters": {
+            "MinPointsDeviation": {
+              "DeviationBuy": 0.5,
+              "DeviationSell": 0.5
+            }
+          }
+        }
+      }
+    },
+    {
+      "SymbolTerminal": "XAUUSD",
+      "SymbolMemory":   "XAUUSD",
+      "Managers": {
+        "DHunter": {
+          "Filters": {
+            "MinPointsDeviation": {
+              "DeviationBuy": 0.5,
+              "DeviationSell": 0.5
+            }
+          }
+        },
+        "StopQuotesNotificator": {
+          "Filters": {
+            "MinPointsDeviation": {
+              "DeviationBuy": 0.5,
+              "DeviationSell": 0.5
+            }
+          }
+        }
+      }
+    },
+    {
+      "SymbolTerminal": "GOLD",
       "SymbolMemory":   "XAUUSD",
       "Managers": {
         "DHunter": {

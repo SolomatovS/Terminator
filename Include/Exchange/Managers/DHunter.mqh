@@ -41,13 +41,12 @@ protected:
       
       if (isOpened)  return;
       
-      int signal = SignalDetection(his, alien);
-      if (signal == -1)
+      MQLRequestOpen request; request.Init(); FillRequest(request, his, alien);
+      if (request.m_cmd == -1)
       {
          Print(__FUNCTION__, ": Ќе удалось определить направление, не торгую"); return;
       }
       
-      MQLRequestOpen request; request.Init(); FillRequest(request, his, alien);
       MQLRequestOpen try[];
       MQLOrder order; order.Init();
       
@@ -107,7 +106,7 @@ protected:
 private:
    void FillRequest(MQLRequestOpen& request, SData& his, SData& alien)
    {
-      request.m_cmd = FillRequestCMD(his, alien);
+      request.m_cmd = SignalDetection(his, alien);
       request.m_symbol = CharArrayToString(his.TSymbol);
       FillRequestVolume(request.m_volume);
       FillRequestPrice(request.m_tick, request.m_cmd, request.m_price);
