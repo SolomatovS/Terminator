@@ -8,8 +8,8 @@
 #property strict
 
 #include "json.mqh"
-#include "Model.mqh"
-#include "FileMemory.mqh"
+#include "..\Model.mqh"
+#include "..\FileMemory.mqh"
 
 
 class Setting
