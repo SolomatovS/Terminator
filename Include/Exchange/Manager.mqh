@@ -335,7 +335,7 @@ public:
       }
    }
 protected:
-   virtual void AcrtionStopQuotes(SData& his, SData& alien)
+   virtual void ActionStopQuotes(SData& his, SData& alien)
    {
       OnNotification(StopLog(his, alien));
    }
@@ -472,7 +472,8 @@ protected:
             FillRequest(request, OrderTicket(), his);
             MQLRequestClose try[];
             
-            bool result = m_trader.CloseOrDeleteOrder(request,
+            bool result = m_trader.CloseOrDeleteOrder(
+                                       request,
                                        try,
                                        m_tryOpenCount,
                                        m_requestVolumeCorrect,

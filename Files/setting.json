@@ -7,18 +7,18 @@
       "Prefix": "Local",
       "Managers": {
         "DHunter": {
-          "Enabler": true,
+          "Enabler": false,
           "Logger": true,
           "Filters": {
             "MinPointsDeviation": {
-              "Enabler": true,
+              "Enabler": false,
               "DeviationBuy": 0.00001,
               "DeviationSell": 0.00001
             },
             "MinSpreadsDeviation": {
               "Enabler": true,
-              "DeviationBuy": 1,
-              "DeviationSell": 1
+              "DeviationBuy": 3,
+              "DeviationSell": 3
             }
           },
           "TimeOut": {
@@ -29,10 +29,10 @@
         },
         "StopQuotesNotificator": {
           "Enabler": true,
-          "Logger": false,
+          "Logger": true,
           "Filters": {
             "MinPointsDeviation": {
-              "Enabler": true,
+              "Enabler": false,
               "DeviationBuy": 0.00001,
               "DeviationSell": 0.00001
             },
@@ -76,11 +76,7 @@
       "SymbolTerminal": "EURUSDi",
       "SymbolMemory":   "EURUSD",
       "Managers": {
-        "Amir": {
-          "Enabler": true
-        },
         "DHunter": {
-          "Enabler": false,
           "Filters": {
             "MinPointsDeviation": {
               "DeviationBuy": 0.0001,
@@ -103,7 +99,6 @@
       "SymbolMemory":   "GBPUSD",
       "Managers": {
         "DHunter": {
-          "Enabler": true,
           "Filters": {
             "MinPointsDeviation": {
               "DeviationBuy": 0.00012,
@@ -126,7 +121,6 @@
       "SymbolMemory":   "USDJPY",
       "Managers": {
         "DHunter": {
-          "Enabler": true,
           "Filters": {
             "MinPointsDeviation": {
               "DeviationBuy": 0.01,
@@ -139,6 +133,28 @@
             "MinPointsDeviation": {
               "DeviationBuy": 0.01,
               "DeviationSell": 0.01
+            }
+          }
+        }
+      }
+    },
+    {
+      "SymbolTerminal": "XAUUSDi",
+      "SymbolMemory":   "XAUUSD",
+      "Managers": {
+        "DHunter": {
+          "Filters": {
+            "MinPointsDeviation": {
+              "DeviationBuy": 0.5,
+              "DeviationSell": 0.5
+            }
+          }
+        },
+        "StopQuotesNotificator": {
+          "Filters": {
+            "MinPointsDeviation": {
+              "DeviationBuy": 0.5,
+              "DeviationSell": 0.5
             }
           }
         }
