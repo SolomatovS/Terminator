@@ -6,12 +6,15 @@
       "Updater": true,
       "Prefix": "Local",
       "Managers": {
+        "Amir": {
+          "Enabler": false
+        },
         "DHunter": {
-          "Enabler": false,
+          "Enabler": true,
           "Logger": true,
           "Filters": {
             "MinPointsDeviation": {
-              "Enabler": false,
+              "Enabler": true,
               "DeviationBuy": 0.00001,
               "DeviationSell": 0.00001
             },
@@ -28,11 +31,11 @@
           }
         },
         "StopQuotesNotificator": {
-          "Enabler": true,
+          "Enabler": false,
           "Logger": true,
           "Filters": {
             "MinPointsDeviation": {
-              "Enabler": false,
+              "Enabler": true,
               "DeviationBuy": 0.00001,
               "DeviationSell": 0.00001
             },
@@ -79,8 +82,8 @@
         "DHunter": {
           "Filters": {
             "MinPointsDeviation": {
-              "DeviationBuy": 0.0001,
-              "DeviationSell": 0.0001
+              "DeviationBuy": 0.00010,
+              "DeviationSell": 0.00010
             }
           }
         },

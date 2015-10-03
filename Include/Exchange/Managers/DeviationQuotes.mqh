@@ -39,9 +39,9 @@ public:
 
 void CalculateTick(SData& his, SData& alien, double& calculatedAsk, double& clculatedBid)
 {
-   double spreadCurrent = NormalizeDouble(his.MQLTick.ask - his.MQLTick.bid, 5);
-   double spreadBefore = NormalizeDouble(his.MQLTickBefore.ask - his.MQLTickBefore.bid, 5);
-   double spread = (spreadCurrent + spreadBefore) / 2;
+   double spread = NormalizeDouble(his.MQLTick.ask - his.MQLTick.bid, 5);
+   //double spreadBefore = NormalizeDouble(his.MQLTickBefore.ask - his.MQLTickBefore.bid, 5);
+   //double spread = (spreadCurrent + spreadBefore) / 2;
    calculatedAsk = (alien.MQLTick.ask + alien.MQLTick.bid) / 2 + spread / 2;
    clculatedBid = calculatedAsk - spread;
 }
@@ -80,9 +80,9 @@ private:
 protected:
    virtual bool VCheck(SData &his, SData &alien)
    {
-      double spreadCurrent = NormalizeDouble(his.MQLTick.ask - his.MQLTick.bid, 5);
-      double spreadBefore = NormalizeDouble(his.MQLTickBefore.ask - his.MQLTickBefore.bid, 5);
-      double spread = (spreadCurrent + spreadBefore) / 2;
+      double spread = NormalizeDouble(his.MQLTick.ask - his.MQLTick.bid, 5);
+      //double spreadBefore = NormalizeDouble(his.MQLTickBefore.ask - his.MQLTickBefore.bid, 5);
+      //double spread = (spreadCurrent + spreadBefore) / 2;
       double calculatedBid, calculatedAsk;
       CalculateTick(his, alien, calculatedAsk, calculatedBid);
       
