@@ -293,3 +293,6 @@ Include/WinUser32.mqh
 Libraries/stdlib.mq4
 Libraries/mqlcache.dat
 Scripts/mqlcache.dat
+Indicators/mqlcache.dat
+*.dat
+Experts/mqlcache.dat
