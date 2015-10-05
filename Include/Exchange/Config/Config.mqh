@@ -188,6 +188,33 @@ private:
       		Print(__FUNCTION__, ": not parse 'Defaults:Monitor:Managers:DeviationQuotes:Filters:MinSpreadsDeviation'. stop parsing.");
       	}
       	if (CheckPointer(minSpreadsDeviation) == POINTER_DYNAMIC)  delete minSpreadsDeviation;
+      	
+      	JSONObject* minGeneralSpreadsDeviation = filters.getObject("MinGeneralSpreadsDeviation");
+      	if (minGeneralSpreadsDeviation != NULL)
+      	{
+      		result = minGeneralSpreadsDeviation.getBool("Enabler", setting.m_filters.m_minGeneralFilter.m_enabler);
+      		if (!result)
+      		{
+      			Print(__FUNCTION__, ": not parse 'Defaults:Monitor:Managers:DeviationQuotes:Filters:MinGeneralSpreadsDeviation:Enabler'. stop parsing.");
+      		}
+      
+      		result = minGeneralSpreadsDeviation.getDouble("MinGeneralSpreads", setting.m_filters.m_minGeneralFilter.m_minGeneralSpreads);
+      		if (!result)
+      		{
+      			Print(__FUNCTION__, ": not parse 'Defaults:Monitor:Managers:DeviationQuotes:Filters:MinSpreadsDeviation:MinGeneralSpreads'. stop parsing.");
+      		}
+      
+      		result = minGeneralSpreadsDeviation.getDouble("MinGeneralPoints", setting.m_filters.m_minGeneralFilter.m_minGeneralPoints);
+      		if (!result)
+      		{
+      			Print(__FUNCTION__, ": not parse 'Defaults:Monitor:Managers:DeviationQuotes:Filters:MinGeneralSpreadsDeviation:MinGeneralPoints'. stop parsing.");
+      		}
+      	}
+      	else
+      	{
+      		Print(__FUNCTION__, ": not parse 'Defaults:Monitor:Managers:DeviationQuotes:Filters:MinGeneralSpreadsDeviation'. stop parsing.");
+      	}
+      	if (CheckPointer(minGeneralSpreadsDeviation) == POINTER_DYNAMIC)  delete minGeneralSpreadsDeviation;
       }
       else
       {
