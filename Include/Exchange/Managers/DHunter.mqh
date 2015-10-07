@@ -39,7 +39,11 @@ protected:
       string symbol = Symbol();
       bool isOpened = OrderIsOpened(symbol, m_magic);
       
-      if (isOpened)  return;
+      if (isOpened)
+      {
+         ActionCloseOrders(his, alien);
+         return;
+      }
       
       MQLRequestOpen request; request.Init(); FillRequest(request, his, alien);
       if (request.m_cmd == -1)
@@ -70,12 +74,16 @@ protected:
    }
    virtual void ActionNoStopQuotes(SData& his, SData& alien)
    {
+      ActionCloseOrders(his, alien);
+   }
+   void ActionCloseOrders(SData& his, SData& alien)
+   {
       int total = OrdersTotal();
       for(int i = 0; i < total; i++)
       {
          if (OrderSelect(i, SELECT_BY_POS, MODE_TRADES))
          {
-            if (OrderCloseTime() > 0 || StringCompare(OrderSymbol(), Symbol()) != 0)   continue;
+            if (OrderCloseTime() > 0 || !OrderUnic(Symbol(), m_magic))   continue;
             
             MQLRequestClose request; request.Init();
             FillRequest(request, OrderTicket(), his);
@@ -123,7 +131,6 @@ private:
          FillRequestPrice(request.m_tick, OrderType(), request.m_price);
          request.m_slippage = 0;
       }
-      
    }
    
    int FillRequestCMD(SData& his, SData& alien)
@@ -173,31 +180,31 @@ private:
    // -1 - в случае если тренд неопределен и торговать не нужно
    int SignalDetection(SData& his, SData& alien)
    {
-      Print(__FUNCTION__, ": ќпредел€ем направление сигнала");
-      if (his.TimeOutQuote >= alien.TimeOutQuote)
-      {
+      //Print(__FUNCTION__, ": ќпредел€ем направление сигнала");
+      //if (his.TimeOutQuote >= alien.TimeOutQuote)
+      //{
          Print(__FUNCTION__, ": ", DoubleToString((his.TimeOutQuote - alien.TimeOutQuote) / 1000, 2), " сек. задержка относительно '", CharArrayToString(alien.Terminal.Company), ": ", alien.Terminal.Login, "'");
          if (alien.MQLTick.bid > his.MQLTick.ask)
          {
             Print(__FUNCTION__, ": –азница курсов: +", DoubleToString(alien.MQLTick.bid - his.MQLTick.ask, 5), ", текущий спред обоих брокеров: ", DoubleToString((alien.MQLTick.ask - alien.MQLTick.bid) + (his.MQLTick.ask - his.MQLTick.bid), 5));
-            if ((alien.MQLTick.ask - alien.MQLTickBefore.ask) > 0 &&
-                (alien.MQLTick.bid - alien.MQLTickBefore.bid) > 0)
-            {
+            //if ((alien.MQLTick.ask - alien.MQLTickBefore.ask) > 0 &&
+            //    (alien.MQLTick.bid - alien.MQLTickBefore.bid) > 0)
+            //{
                Print(__FUNCTION__, ": ¬ терминале '", CharArrayToString(alien.Terminal.Company), ": ", alien.Terminal.Login, "', котировка изменились вверх на: ASK = +", DoubleToString((alien.MQLTick.ask - alien.MQLTickBefore.ask), 5), ", BID = +", DoubleToString((alien.MQLTick.bid - alien.MQLTickBefore.bid), 5));
                return OP_BUY;
-            }
+            //}
          }
          if (alien.MQLTick.ask < his.MQLTick.bid)
          {
             Print(__FUNCTION__, ": разница курсов: +", DoubleToString(his.MQLTick.bid - alien.MQLTick.ask, 5), ", текущий спред обоих брокеров: ", DoubleToString((alien.MQLTick.ask - alien.MQLTick.bid) + (his.MQLTick.ask - his.MQLTick.bid), 5));
-            if ((alien.MQLTick.ask - alien.MQLTickBefore.ask) < 0 &&
-                (alien.MQLTick.bid - alien.MQLTickBefore.bid) < 0)
-            {
+            //if ((alien.MQLTick.ask - alien.MQLTickBefore.ask) < 0 &&
+            //    (alien.MQLTick.bid - alien.MQLTickBefore.bid) < 0)
+            //{
                Print(__FUNCTION__, ": ¬ терминале '", CharArrayToString(alien.Terminal.Company), ": ", alien.Terminal.Login, "', котировка изменились вниз на: ASK = ", DoubleToString((alien.MQLTick.ask - alien.MQLTickBefore.ask), 5), ", BID = ", DoubleToString((alien.MQLTick.bid - alien.MQLTickBefore.bid), 5));
                return OP_SELL;
-            }
+            //}
          }
-      }
+      //}
       Print(__FUNCTION__, ": “ренд не определен");
       return -1;
    }

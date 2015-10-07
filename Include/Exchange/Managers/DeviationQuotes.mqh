@@ -64,7 +64,12 @@ protected:
       
       double pointDeviationBuy   = calculatedBid - his.MQLTick.ask;
       double pointDeviationSell  = his.MQLTick.bid - calculatedAsk;
-      return (pointDeviationBuy > m_buyDeviation || pointDeviationSell > m_sellDeviation);
+      bool result = (pointDeviationBuy > m_buyDeviation || pointDeviationSell > m_sellDeviation);
+      if (result)
+      {
+         int i = 0;
+      }
+      return result;
    }
 };
 
@@ -92,7 +97,44 @@ protected:
          koeffBuy  = (calculatedBid - his.MQLTick.ask) / spread;
          koeffSell = (his.MQLTick.bid - calculatedAsk) / spread;
       }
-      return (koeffBuy > m_buyDeviation || koeffSell > m_sellDeviation);
+      bool result = (koeffBuy > m_buyDeviation || koeffSell > m_sellDeviation);
+      if (result)
+      {
+         int jlnsdf = 0;
+      }
+      return result;
+   }
+};
+
+class MinGeneralSpreadsDeviation : Filter
+{
+public:
+   MinGeneralSpreadsDeviation(MIN_GENERAL_FILTER& setting) : Filter() { m_enabler = setting.m_enabler; m_setting.Init(setting); }
+
+private:
+   MIN_GENERAL_FILTER m_setting;
+
+protected:
+   virtual bool VCheck(SData &his, SData &alien)
+   {
+      double spreadHis = NormalizeDouble(his.MQLTick.ask - his.MQLTick.bid, 5);
+      double spreadAlien = NormalizeDouble(alien.MQLTick.ask - alien.MQLTick.bid, 5);
+      double spread = spreadHis + spreadAlien;
+      double pointBuy = (alien.MQLTick.bid - his.MQLTick.ask);
+      double pointSell = (his.MQLTick.bid - alien.MQLTick.ask);
+      double koeffBuy = 0; double koeffSell = 0;
+      if (NormalizeDouble(spread, 5) > 0)
+      {
+         koeffBuy  = pointBuy / spread;
+         koeffSell = pointSell / spread;
+      }
+      bool result = (koeffBuy > m_setting.m_minGeneralSpreads || koeffSell > m_setting.m_minGeneralSpreads);
+      result = result && (pointBuy >= m_setting.m_minGeneralPoints || pointSell >= m_setting.m_minGeneralPoints);
+      if (result)
+      {
+         int jlnsdf = 0;
+      }
+      return result;
    }
 };
 
@@ -123,6 +165,10 @@ public:
       if (m_setting.m_minSpreadDeviation.m_enabler)
       {
          Add(filters, new MinSpreadsDeviation(m_setting.m_minSpreadDeviation));
+      }
+      if (m_setting.m_minGeneralFilter.m_enabler)
+      {
+         Add(filters, new MinGeneralSpreadsDeviation(m_setting.m_minGeneralFilter));
       }
    }
 };
@@ -238,6 +284,11 @@ private:
          result = (result && m_filters[i].Check(his, alien));
          i++;
       }
+      if (result == true)
+      {
+         int dfg = 0;
+         int sdf = dfg + 4;
+      }
       return result;
    }
    void Log(SData& datas[], int index)
@@ -260,6 +311,9 @@ protected:
       
       double pointBuy  = alien.MQLTick.bid - his.MQLTick.ask;
       double pointSell = his.MQLTick.bid - alien.MQLTick.ask;
+      double spreadHis = (his.MQLTick.ask - his.MQLTick.bid);
+      double spreadAlien = (alien.MQLTick.ask - alien.MQLTick.bid);
+      double spreadGeneral = spreadHis + spreadAlien;
       double spreadAverage = ((his.MQLTick.ask - his.MQLTick.bid) + (his.MQLTickBefore.ask - his.MQLTickBefore.bid)) / 2;
       double spreadAverageAlien = ((alien.MQLTick.ask - alien.MQLTick.bid) + (alien.MQLTickBefore.ask - alien.MQLTickBefore.bid)) / 2;
       string text = StringConcatenate(
@@ -280,12 +334,10 @@ protected:
          "  Spread avg        ", DoubleToString(spreadAverageAlien, 5), "    |     ", DoubleToString(spreadAverage, 5), "    \n",
          "  TradeAllowed      ", alien.isTradeAllowed, "        |      ", his.isTradeAllowed, "          \n",
          "-------------------------------------------------------------------", "\n",
-         "  Buy:                " , DoubleToString(NormalizeDouble(spreadAverage, 5) > 0 ? pointBuy / spreadAverage : 0,  2), " sp.    |   ", DoubleToString(pointBuy,  5), " pt.", "\n",
-         "  Sell:                 ", DoubleToString(NormalizeDouble(spreadAverage, 5) > 0 ? pointSell / spreadAverage : 0, 2), " sp.    |   ", DoubleToString(pointSell, 5), " pt.", "\n",
+         "  Buy:                " , DoubleToString(NormalizeDouble(spreadGeneral, 5) > 0 ? pointBuy / spreadGeneral : 0,  2), " sp.    |   ", DoubleToString(pointBuy,  5), " pt.", "\n",
+         "  Sell:                 ", DoubleToString(NormalizeDouble(spreadGeneral, 5) > 0 ? pointSell / spreadGeneral : 0, 2), " sp.    |   ", DoubleToString(pointSell, 5), " pt.", "\n",
          //"     Stop quotes: ", string(status), "\n",
          "-------------------------------------------------------------------", "\n\n"
       );
    }
 };
-
-
