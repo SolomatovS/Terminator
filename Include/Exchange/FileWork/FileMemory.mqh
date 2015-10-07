@@ -7,11 +7,12 @@
 #property link      ""
 #property strict
 
-#include "Model.mqh"
+#include "..\Model.mqh"
+#include "memmaplib.mqh"
 
 #define ERROR_FILE_NOT_FOUND		2
-#define HANDLE32	int
-
+//#define HANDLE32	int
+/*
 #import "MemMap32.dll"
    HANDLE32 MemOpen(char &path[],int size,int mode,int &err); // открываем/создаем файл в памяти, получаем хендл
    void MemClose(HANDLE32 hmem); // закрываем файл в памяти
@@ -23,7 +24,7 @@
    int MemGetSize(HANDLE32 hmem, int &err);
    int MemSetSize(HANDLE32 hmem, uint size, int &err);
 #import
-
+*/
 
 template <typename T>
 void ToByte(const T &value, uchar &bytes[])
@@ -54,13 +55,13 @@ void ByteTo(const uchar &bytes[], T &value)
    vector = byte;
    value = vector.V;
 }
-
+/*
 enum FlagOpenMode
 {
    modeOpen = 0,
    modeCreate = 1
 };
-
+*/
 class FileMemory
 {
 private:
@@ -71,6 +72,7 @@ private:
    int m_error;
    uint m_offset;
    HANDLE32 m_hMem;
+   CMemMapApi API;
 
 public:
 	FileMemory(string fileName)
@@ -112,14 +114,14 @@ public:
    }
 private: // Methods
    void Name(string fileName)  { m_fileName = fileName; StringToCharArray(m_fileName, m_fileNameChar); }
-   void OpenOrCreate(FlagOpenMode mode)
+   void OpenOrCreate(OpenFlags mode)
    {
       if (!m_opened)
       {
          switch(mode)
          {
-            case modeOpen:   m_hMem = MemOpen(m_fileNameChar, -1, mode, m_error); break;
-            case modeCreate: m_hMem = MemOpen(m_fileNameChar, 1, mode, m_error); break;
+            case modeOpen:   m_hMem = API.Open(m_fileName, -1, mode, m_error); break;
+            case modeCreate: m_hMem = API.Open(m_fileName, 100000, mode, m_error); break;
          }
          
          if(m_hMem > 0)
@@ -148,7 +150,7 @@ private: // Methods
       {
          if(m_hMem != NULL)
          {
-            MemClose(m_hMem);
+            API.Close(m_hMem);
             m_hMem = NULL;
             m_opened = false;
          }
@@ -170,11 +172,11 @@ private: // Methods
 public:
    uint Size()
    {
-      return MemGetSize(m_hMem, m_error);
+      return API.GetSize(m_hMem, m_error);
    }
    void Size(uint size)
    {
-      MemSetSize(m_hMem, size, m_error);
+      API.SetSize(m_hMem, size, m_error);
    }
    uint Tell()
    {
@@ -212,7 +214,7 @@ public:
          return false;
       }
       Print("[Grow]: Add ", addSize, " byte");
-      m_hMem = MemGrows(m_hMem, m_fileNameChar, newSize, m_error);
+      m_hMem = API.Grows(m_hMem, m_fileName, newSize, m_error);
       if (m_hMem <= 0)
       {
          Print("[Grow]: attampt allocate new file size. error = ", m_error);
@@ -230,7 +232,7 @@ public:
       
       int size = sizeof(T);
       uchar value_char[]; ArrayResize(value_char, size); ArrayInitialize(value_char, 0);
-      int result = MemRead(m_hMem, value_char, m_offset, size, m_error);
+      int result = API.Read(m_hMem, value_char, m_offset, size, m_error);
       this.Seek(result, SEEK_CUR);
       if(result < size || m_error != 0)
       {
@@ -293,7 +295,7 @@ public:
       uchar value_char[];
       ToByte(value, value_char);
       
-      int result = MemWrite(m_hMem, value_char, m_offset, size, m_error);
+      int result = API.Write(m_hMem, value_char, m_offset, size, m_error);
       if(result != 0 || m_error != 0)
       {
          if (result == -2) // try memory grow
