@@ -33,18 +33,30 @@ public:
       m_magic = 111;
    }
 protected:
-   virtual void ActionStopQuotes(SData& his, SData& alien)
+   virtual void ActionStopQuotes(SData& his, SData& alien, int typeOrder)
    {
       int total = OrdersTotal();
       string symbol = Symbol();
-      bool isOpened = OrderIsOpened(symbol, m_magic);
+      bool isOpened = OrderIsOpened(symbol, m_magic, typeOrder);
       
+      if (isOpened) return;
+      else ActionOpenOrder(his, alien, typeOrder); return;
+      
+      /*
+      typeOrderReverse = typeOrder;
+      if (typeOrder == OP_BUY)   typeOrderReverse = OP_SELL;
+      if (typeOrder == OP_SELL)  typeOrderReverse = OP_BUY;
+      
+      isOpened = OrderIsOpened(symbol, m_magic, typeOrder);
       if (isOpened)
       {
-         ActionCloseOrders(his, alien);
+         ActionOpenOrder(his, alien, typeOrderReverse);
          return;
       }
-      
+      */
+   }
+   void ActionOpenOrder(SData& his, SData& alien, int typeOrder)
+   {
       MQLRequestOpen request; request.Init(); FillRequest(request, his, alien);
       if (request.m_cmd == -1)
       {
@@ -74,7 +86,7 @@ protected:
    }
    virtual void ActionNoStopQuotes(SData& his, SData& alien)
    {
-      ActionCloseOrders(his, alien);
+      //ActionCloseOrders(his, alien);
    }
    void ActionCloseOrders(SData& his, SData& alien)
    {
@@ -155,17 +167,18 @@ private:
       volume = 0.01;
    }
    
-   bool OrderUnic(string symbol, int magic)
+   bool OrderUnic(string symbol, int magic, int typeOrder = -1)
    {
-      return (StringCompare(OrderSymbol(), symbol) == 0 && OrderMagicNumber() == magic);
+      return (StringCompare(OrderSymbol(), symbol) == 0 && OrderMagicNumber() == magic && (OrderType() == typeOrder || typeOrder == -1));
    }
-   bool OrderIsOpened(string symbol, int magic)
+   
+   bool OrderIsOpened(string symbol, int magic, int typeOrder)
    {
       for(int i = 0; i < OrdersTotal(); i++)
       {
          if (OrderSelect(i, SELECT_BY_POS, MODE_TRADES))
          {
-            if (OrderUnic(symbol, magic))
+            if (OrderUnic(symbol, magic, typeOrder))
             {
                return true;
             }

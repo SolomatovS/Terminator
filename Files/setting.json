@@ -149,7 +149,7 @@
             },
             "MinGeneralSpreadsDeviation": {
               "MinGeneralSpreads": 2,
-              "MinGeneralPoints": 0.0002,
+              "MinGeneralPoints": 0.0003,
             }
           }
         },

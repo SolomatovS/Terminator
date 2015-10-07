@@ -19,7 +19,7 @@ protected:
    bool m_enabler;
    
 protected:
-   virtual bool VCheck(SData &his, SData &alien)
+   virtual bool VCheck(SData &his, SData &alien, int& typeOrder)
    {
       return true;
    }
@@ -27,11 +27,11 @@ protected:
 public:
    // if filter disable, return true
    // if check successful, return true, otherwise fale
-   bool Check(SData &his, SData &alien)
+   bool Check(SData &his, SData &alien, int& typeOrder)
    {
       if (!m_enabler) return true;
       
-      return VCheck(his, alien);
+      return VCheck(his, alien, typeOrder);
    }
    
    void Enable(bool enabler = true) { m_enabler = enabler; }
@@ -118,7 +118,13 @@ protected:
    virtual bool VCheck(SData &his, SData &alien)
    {
       double spreadHis = NormalizeDouble(his.MQLTick.ask - his.MQLTick.bid, 5);
+      double spreadHisBefore = NormalizeDouble(his.MQLTickBefore.ask - his.MQLTickBefore.bid, 5);
+      double spreadHisAvg = (spreadHis + spreadHisBefore) / 2;
+      if (spreadHisAvg > spreadHis) spreadHis = spreadHisAvg;
       double spreadAlien = NormalizeDouble(alien.MQLTick.ask - alien.MQLTick.bid, 5);
+      double spreadAlienBefore = NormalizeDouble(alien.MQLTickBefore.ask - alien.MQLTickBefore.bid, 5);
+      double spreadAlienAvg = (spreadAlien + spreadAlienBefore) / 2;
+      if (spreadAlienAvg > spreadAlien)  spreadAlien = spreadAlienAvg;
       double spread = spreadHis + spreadAlien;
       double pointBuy = (alien.MQLTick.bid - his.MQLTick.ask);
       double pointSell = (his.MQLTick.bid - alien.MQLTick.ask);
@@ -206,9 +212,10 @@ protected:
       {
          if (i == index) continue;
          
-         if(CheckStopQuotes(datas[index], datas[i]))
+         int typeOrder = -1;
+         if(CheckStopQuotes(datas[index], datas[i], typeOrder))
          {
-            ActionStopQuotes(datas[index], datas[i]);
+            ActionStopQuotes(datas[index], datas[i], typeOrder);
          }
          else
          {
@@ -216,7 +223,7 @@ protected:
          }
       }
    }
-   virtual void ActionStopQuotes(SData& his, SData& alien)
+   virtual void ActionStopQuotes(SData& his, SData& alien, int typeOrder)
    {
       
    }
@@ -225,11 +232,11 @@ protected:
       
    }
    
-   bool CheckStopQuotes(SData &his, SData &alien)
+   bool CheckStopQuotes(SData &his, SData &alien, int& typeOrder)
    {
-      if (BaseCheck(his, alien))
+      if (BaseCheck(his, alien, typeOrder))
       {
-         if (Filtration(his, alien))
+         if (Filtration(his, alien, typeOrder))
          {
             return true;
          }
@@ -238,23 +245,24 @@ protected:
    }
 
 private:
-   bool BaseCheck(SData &his, SData &alien)
+   bool BaseCheck(SData &his, SData &alien, int& typeOrder)
    {
       bool result = true;
       if (m_enabler)
       {
          result = result && !ExpertTimeOut(alien);
          result = result && TradeAllowed(his, alien);
-         result = result && QuotesDeviation(his, alien); if (!result)   return false;
+         result = result && QuotesDeviation(his, alien, typeOrder); if (!result)   return false;
          result = result && QuotesTimeOut(his);
       }
       return result;
    }
    
    // Check quotes deviation (BID > ASK || ASK < BID)
-   bool QuotesDeviation(SData &his, SData &alien)
+   bool QuotesDeviation(SData &his, SData &alien, int& typeOrder)
    {
       if (!m_enabler) return false;
+      typeOrder = (alien.MQLTick.bid > his.MQLTick.ask) ? OP_BUY : ((alien.MQLTick.ask < his.MQLTick.bid) ? OP_SELL : -1);
       return (alien.MQLTick.bid > his.MQLTick.ask) || (alien.MQLTick.ask < his.MQLTick.bid);
    }
    
@@ -275,20 +283,16 @@ private:
       return (his.isTradeAllowed && alien.isTradeAllowed);
    }
    
-   bool Filtration(SData &his, SData &alien)
+   bool Filtration(SData &his, SData &alien, int& typeOrder)
    {
       int size = ArraySize(m_filters); int i = 0;
       bool result = true;
       while(i < size && result)
       {
-         result = (result && m_filters[i].Check(his, alien));
+         result = (result && m_filters[i].Check(his, alien, typeOrder));
          i++;
       }
-      if (result == true)
-      {
-         int dfg = 0;
-         int sdf = dfg + 4;
-      }
+      
       return result;
    }
    void Log(SData& datas[], int index)
