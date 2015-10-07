@@ -200,7 +200,7 @@ PBYTE64	CMemMapApi::ViewFile(HANDLE64 hmem, DWORD &err) // получаем буфер
 {
 	err=0;
 	if (hmem==NULL) { err=-1; return(NULL); }// если не открыт
-	PBYTE64 view=(PBYTE64)MapViewOfFileX(hmem, FILE_MAP_ALL_ACCESS, 0, 0, 0); // получили представление файла
+	PBYTE64 view=(PBYTE64)MapViewOfFileX(hmem, FILE_MAP_ALL_ACCESS, 0, 0, 100000); // получили представление файла
 	if (view==NULL) { err=kernel32::GetLastError(); return(NULL); } // если ошибка представления
 	return(view); // возвращаем указатель на байтовый просмотр
 }
