@@ -57,7 +57,7 @@ private:
    double   m_sellDeviation;
 
 protected:
-   virtual bool VCheck(SData &his, SData &alien)
+   virtual bool VCheck(SData &his, SData &alien, int& typeOrder)
    {
       double calculatedBid, calculatedAsk;
       CalculateTick(his, alien, calculatedAsk, calculatedBid);
@@ -83,7 +83,7 @@ private:
    double   m_sellDeviation;
 
 protected:
-   virtual bool VCheck(SData &his, SData &alien)
+   virtual bool VCheck(SData &his, SData &alien, int& typeOrder)
    {
       double spread = NormalizeDouble(his.MQLTick.ask - his.MQLTick.bid, 5);
       //double spreadBefore = NormalizeDouble(his.MQLTickBefore.ask - his.MQLTickBefore.bid, 5);
@@ -115,7 +115,7 @@ private:
    MIN_GENERAL_FILTER m_setting;
 
 protected:
-   virtual bool VCheck(SData &his, SData &alien)
+   virtual bool VCheck(SData &his, SData &alien, int& typeOrder)
    {
       double spreadHis = NormalizeDouble(his.MQLTick.ask - his.MQLTick.bid, 5);
       double spreadHisBefore = NormalizeDouble(his.MQLTickBefore.ask - his.MQLTickBefore.bid, 5);
@@ -138,7 +138,7 @@ protected:
       result = result && (pointBuy >= m_setting.m_minGeneralPoints || pointSell >= m_setting.m_minGeneralPoints);
       if (result)
       {
-         int jlnsdf = 0;
+         typeOrder = (pointBuy >= m_setting.m_minGeneralPoints) ? OP_BUY : OP_SELL;
       }
       return result;
    }
