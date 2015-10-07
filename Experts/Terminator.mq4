@@ -21,7 +21,6 @@ Expert*              MainExpert;
 //+------------------------------------------------------------------+
 int OnInit()
 {
-   InitExpert(Config);
    OnTick();
    
    return(INIT_SUCCEEDED);
@@ -31,13 +30,13 @@ int OnInit()
 //+------------------------------------------------------------------+
 void OnDeinit(const int reason)
 {
-   DeinitExpert();
 }
 //+------------------------------------------------------------------+
 //| Expert tick function                                             |
 //+------------------------------------------------------------------+
 void OnTick()
 {
+   InitExpert(Config);
    while(!IsStopped())
    {
       ulong count = GetMicrosecondCount();
@@ -52,6 +51,7 @@ void OnTick()
          Sleep(Config.m_updateMilliSecondsExpert - count * 0.001);    // SLEEP EXPERTS
       }
    }
+   DeinitExpert();
 }
 //+------------------------------------------------------------------+
 
