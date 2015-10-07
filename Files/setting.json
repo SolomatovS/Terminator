@@ -94,6 +94,10 @@
             "MinPointsDeviation": {
               "DeviationBuy": 0.00010,
               "DeviationSell": 0.00010
+            },
+            "MinGeneralSpreadsDeviation": {
+              "MinGeneralSpreads": 2,
+              "MinGeneralPoints": 0.0002,
             }
           }
         },
@@ -116,6 +120,10 @@
             "MinPointsDeviation": {
               "DeviationBuy": 0.00010,
               "DeviationSell": 0.00010
+            },
+            "MinGeneralSpreadsDeviation": {
+              "MinGeneralSpreads": 2,
+              "MinGeneralPoints": 0.0002,
             }
           }
         },
@@ -138,6 +146,10 @@
             "MinPointsDeviation": {
               "DeviationBuy": 0.00010,
               "DeviationSell": 0.00010
+            },
+            "MinGeneralSpreadsDeviation": {
+              "MinGeneralSpreads": 2,
+              "MinGeneralPoints": 0.0002,
             }
           }
         },
@@ -160,6 +172,10 @@
             "MinPointsDeviation": {
               "DeviationBuy": 0.00012,
               "DeviationSell": 0.00012
+            },
+            "MinGeneralSpreadsDeviation": {
+              "MinGeneralSpreads": 2,
+              "MinGeneralPoints": 0.0003,
             }
           }
         },
@@ -182,6 +198,10 @@
             "MinPointsDeviation": {
               "DeviationBuy": 0.00012,
               "DeviationSell": 0.00012
+            },
+            "MinGeneralSpreadsDeviation": {
+              "MinGeneralSpreads": 2,
+              "MinGeneralPoints": 0.0003,
             }
           }
         },
@@ -204,6 +224,10 @@
             "MinPointsDeviation": {
               "DeviationBuy": 0.00012,
               "DeviationSell": 0.00012
+            },
+            "MinGeneralSpreadsDeviation": {
+              "MinGeneralSpreads": 2,
+              "MinGeneralPoints": 0.0003,
             }
           }
         },
@@ -228,8 +252,8 @@
               "DeviationSell": 0.01
             },
             "MinGeneralSpreadsDeviation": {
-              "MinGeneralSpreads": 0,
-              "MinGeneralPoints": 0.013,
+              "MinGeneralSpreads": 2,
+              "MinGeneralPoints": 0.02,
             }
           }
         },
@@ -241,7 +265,7 @@
             },
             "MinGeneralSpreadsDeviation": {
               "MinGeneralSpreads": 0,
-              "MinGeneralPoints": 0.013,
+              "MinGeneralPoints": 0.02,
             }
           }
         }
@@ -288,8 +312,8 @@
               "DeviationSell": 0.01
             },
             "MinGeneralSpreadsDeviation": {
-              "MinGeneralSpreads": 1,
-              "MinGeneralPoints": 0.013,
+              "MinGeneralSpreads": 2,
+              "MinGeneralPoints": 0.02,
             }
           }
         },
@@ -300,8 +324,8 @@
               "DeviationSell": 0.01
             },
             "MinGeneralSpreadsDeviation": {
-              "MinGeneralSpreads": 1,
-              "MinGeneralPoints": 0.013,
+              "MinGeneralSpreads": 2,
+              "MinGeneralPoints": 0.02,
             }
           }
         }
@@ -360,6 +384,10 @@
             "MinPointsDeviation": {
               "DeviationBuy": 0.5,
               "DeviationSell": 0.5
+            },
+            "MinGeneralSpreadsDeviation": {
+              "MinGeneralSpreads": 2,
+              "MinGeneralPoints": 0.5,
             }
           }
         },
@@ -382,6 +410,10 @@
             "MinPointsDeviation": {
               "DeviationBuy": 0.5,
               "DeviationSell": 0.5
+            },
+            "MinGeneralSpreadsDeviation": {
+              "MinGeneralSpreads": 2,
+              "MinGeneralPoints": 0.5,
             }
           }
         },

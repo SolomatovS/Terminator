@@ -73,7 +73,9 @@ protected:
       }
    }
    virtual void ActionNoStopQuotes(SData& his, SData& alien)
-   {}
+   {
+      ActionCloseOrders(his, alien);
+   }
    void ActionCloseOrders(SData& his, SData& alien)
    {
       int total = OrdersTotal();
@@ -81,7 +83,7 @@ protected:
       {
          if (OrderSelect(i, SELECT_BY_POS, MODE_TRADES))
          {
-            if (OrderCloseTime() > 0 || StringCompare(OrderSymbol(), Symbol()) != 0)   continue;
+            if (OrderCloseTime() > 0 || !OrderUnic(Symbol(), m_magic))   continue;
             
             MQLRequestClose request; request.Init();
             FillRequest(request, OrderTicket(), his);
