@@ -157,7 +157,7 @@ private:
    
    bool OrderUnic(string symbol, int magic)
    {
-      return (StringCompare(OrderSymbol(), symbol) != 0 && OrderMagicNumber() == magic);
+      return (StringCompare(OrderSymbol(), symbol) == 0 && OrderMagicNumber() == magic);
    }
    bool OrderIsOpened(string symbol, int magic)
    {

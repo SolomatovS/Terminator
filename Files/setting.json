@@ -97,7 +97,7 @@
             },
             "MinGeneralSpreadsDeviation": {
               "MinGeneralSpreads": 2,
-              "MinGeneralPoints": 0.0002,
+              "MinGeneralPoints": 0.00015,
             }
           }
         },
@@ -123,7 +123,7 @@
             },
             "MinGeneralSpreadsDeviation": {
               "MinGeneralSpreads": 2,
-              "MinGeneralPoints": 0.0002,
+              "MinGeneralPoints": 0.00015,
             }
           }
         },
@@ -175,7 +175,7 @@
             },
             "MinGeneralSpreadsDeviation": {
               "MinGeneralSpreads": 2,
-              "MinGeneralPoints": 0.0003,
+              "MinGeneralPoints": 0.0002,
             }
           }
         },
@@ -201,7 +201,7 @@
             },
             "MinGeneralSpreadsDeviation": {
               "MinGeneralSpreads": 2,
-              "MinGeneralPoints": 0.0003,
+              "MinGeneralPoints": 0.0002,
             }
           }
         },
@@ -227,7 +227,7 @@
             },
             "MinGeneralSpreadsDeviation": {
               "MinGeneralSpreads": 2,
-              "MinGeneralPoints": 0.0003,
+              "MinGeneralPoints": 0.0002,
             }
           }
         },
@@ -253,7 +253,7 @@
             },
             "MinGeneralSpreadsDeviation": {
               "MinGeneralSpreads": 2,
-              "MinGeneralPoints": 0.02,
+              "MinGeneralPoints": 0.017,
             }
           }
         },
@@ -264,8 +264,8 @@
               "DeviationSell": 0.01
             },
             "MinGeneralSpreadsDeviation": {
-              "MinGeneralSpreads": 0,
-              "MinGeneralPoints": 0.02,
+              "MinGeneralSpreads": 2,
+              "MinGeneralPoints": 0.017,
             }
           }
         }
@@ -283,7 +283,7 @@
             },
             "MinGeneralSpreadsDeviation": {
               "MinGeneralSpreads": 2,
-              "MinGeneralPoints": 0.02,
+              "MinGeneralPoints": 0.017,
             }
           }
         },
@@ -295,7 +295,7 @@
             },
             "MinGeneralSpreadsDeviation": {
               "MinGeneralSpreads": 2,
-              "MinGeneralPoints": 0.02,
+              "MinGeneralPoints": 0.017,
             }
           }
         }
@@ -313,7 +313,7 @@
             },
             "MinGeneralSpreadsDeviation": {
               "MinGeneralSpreads": 2,
-              "MinGeneralPoints": 0.02,
+              "MinGeneralPoints": 0.017,
             }
           }
         },
@@ -340,6 +340,10 @@
             "MinPointsDeviation": {
               "DeviationBuy": 0.5,
               "DeviationSell": 0.5
+            },
+            "MinGeneralSpreadsDeviation": {
+              "MinGeneralSpreads": 2,
+              "MinGeneralPoints": 0.4,
             }
           }
         },
@@ -362,6 +366,10 @@
             "MinPointsDeviation": {
               "DeviationBuy": 0.5,
               "DeviationSell": 0.5
+            },
+            "MinGeneralSpreadsDeviation": {
+              "MinGeneralSpreads": 2,
+              "MinGeneralPoints": 0.4,
             }
           }
         },
@@ -387,7 +395,7 @@
             },
             "MinGeneralSpreadsDeviation": {
               "MinGeneralSpreads": 2,
-              "MinGeneralPoints": 0.5,
+              "MinGeneralPoints": 0.4,
             }
           }
         },
@@ -413,7 +421,7 @@
             },
             "MinGeneralSpreadsDeviation": {
               "MinGeneralSpreads": 2,
-              "MinGeneralPoints": 0.5,
+              "MinGeneralPoints": 0.4,
             }
           }
         },
