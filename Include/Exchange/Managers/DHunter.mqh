@@ -13,6 +13,7 @@
 class DHunter : DeviationQuotes
 {
    Trade    m_trader;
+   double   m_lots;
    int      m_magic;
    
    bool     m_requestVolumeCorrect;
@@ -22,15 +23,16 @@ class DHunter : DeviationQuotes
    int      m_tryOpenCount;
    
 public:
-   DHunter(FilterConfigurator* filterConfigurator, TIMEOUT& timeOutSettings, bool logger = true , bool enabler = true) :
+   DHunter(FilterConfigurator* filterConfigurator, TIMEOUT& timeOutSettings, double lots, int magic, bool logger = true, bool enabler = true) :
       DeviationQuotes(filterConfigurator, timeOutSettings, logger, enabler)
    {
       m_requestVolumeCorrect = false;
       m_requestPriceCorrect = false;
       m_requestStoplossCorrect = true;
       m_requestTakeprofitCorrect = true;
-      m_tryOpenCount = 5;
-      m_magic = 111;
+      m_tryOpenCount = 10;
+      m_lots = lots;
+      m_magic = magic;
    }
 protected:
    virtual void ActionStopQuotes(SData& his, SData& alien, int typeOrder)
@@ -57,7 +59,8 @@ protected:
    }
    void ActionOpenOrder(SData& his, SData& alien, int typeOrder)
    {
-      MQLRequestOpen request; request.Init(); FillRequest(request, his, alien);
+      MQLRequestOpen request; request.Init(); request.m_cmd = typeOrder;
+      FillRequest(request, his, alien);
       if (request.m_cmd == -1)
       {
          Print(__FUNCTION__, ": Ќе удалось определить направление, не торгую"); return;
@@ -86,7 +89,7 @@ protected:
    }
    virtual void ActionNoStopQuotes(SData& his, SData& alien)
    {
-      //ActionCloseOrders(his, alien);
+      
    }
    void ActionCloseOrders(SData& his, SData& alien)
    {
@@ -126,8 +129,8 @@ protected:
 private:
    void FillRequest(MQLRequestOpen& request, SData& his, SData& alien)
    {
-      request.m_cmd = SignalDetection(his, alien);
-      request.m_symbol = CharArrayToString(his.TSymbol);
+      //request.m_cmd = SignalDetection(his, alien);
+      ArrayCopy(request.m_symbol, his.TSymbol);
       FillRequestVolume(request.m_volume);
       FillRequestPrice(request.m_tick, request.m_cmd, request.m_price);
       request.m_magic = m_magic;

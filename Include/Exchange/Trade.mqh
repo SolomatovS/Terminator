@@ -8,108 +8,7 @@
 #property strict
 
 #include <stdlib.mqh>
-
-struct MQLRequestClose
-{
-   int      m_ticket;
-   double   m_lots;
-   double   m_price;
-   MqlTick  m_tick;
-   double   m_executionPrice;
-   ulong    m_executionMicrosecond;
-   int      m_slippage;
-   int      m_opposite;
-   color    m_arraow_color;
-
-   int      m_error;
-   
-   void Init(int ticket, double lots, double price, const MqlTick& tick, double executionPrice, ulong executionMicrosecond, int slippage, int opposite, color arraw_color = clrNONE, int error = 0)
-   {
-      m_ticket = ticket; m_lots = lots; m_price = price;
-      m_tick.ask = tick.ask; m_tick.bid = tick.bid; m_tick.last = tick.last; m_tick.time = tick.time; m_tick.volume = tick.volume;
-      m_executionPrice = executionPrice; m_executionMicrosecond = executionMicrosecond; m_slippage = slippage; m_opposite = opposite; m_arraow_color = arraw_color; m_error = error;
-   }
-   void Init(const MQLRequestClose& request)
-   {
-      Init(request.m_ticket, request.m_lots, request.m_price, request.m_tick, request.m_executionPrice, request.m_executionMicrosecond, request.m_slippage, request.m_opposite, request.m_arraow_color, request.m_error);
-   }
-   void Init()
-   {
-      MqlTick tick;
-      Init(0, 0, 0, tick, 0, 0, 0, 0);
-   }
-};
-
-struct MQLRequestOpen
-{
-   string   m_symbol;
-   int      m_cmd;
-   double   m_volume;
-   double   m_price;
-   MqlTick  m_tick;
-   double   m_executionPrice;
-   ulong    m_executionMicrosecond;
-   int      m_slippage;
-   double   m_stoploss;
-   double   m_takeprofit;
-   string   m_comment;
-   int      m_magic;
-   datetime m_expiration;
-   color    m_arrow_color;
-   int      m_error;
-   
-   void Init(string symbol, int cmd, double volume, double price, const MqlTick& tick, double executionPrice, ulong executionMicrosecond, int slippage, double stoploss, double takeprofit, string comment = NULL, int magic = 0, datetime expiration = 0, color arrow_color = clrNONE, int error = 0)
-   {
-      m_symbol = symbol; m_cmd = cmd; m_volume = volume; m_price = price;
-      m_tick.ask = tick.ask; m_tick.bid = tick.bid; m_tick.last = tick.last; m_tick.time = tick.time; m_tick.volume = tick.volume;
-      m_executionPrice = executionPrice; m_executionMicrosecond = executionMicrosecond; m_stoploss = stoploss; m_takeprofit = takeprofit;
-      m_comment = comment; m_magic = magic; m_expiration = expiration; m_arrow_color = arrow_color; m_error = error;
-   }
-   void Init(const MQLRequestOpen& request)
-   {
-      Init(request.m_symbol, request.m_cmd, request.m_volume, request.m_price, request.m_tick, request.m_executionPrice, request.m_executionMicrosecond, request.m_slippage, request.m_stoploss, request.m_takeprofit, request.m_comment, request.m_magic, request.m_expiration, request.m_arrow_color, request.m_error);
-   }
-   
-   void Init()
-   {
-      MqlTick tick;
-      Init(NULL, 0, 0, 0, tick, 0, 0, 0, 0, 0);
-   }
-};
-
-struct MQLOrder
-{
-   int      m_ticket;
-   string   m_symbol;
-   int      m_cmd;
-   double   m_volume;
-   double   m_price;
-   int      m_slippage;
-   double   m_stoploss;
-   double   m_takeprofit;
-   string   m_comment;
-   int      m_magic;
-   datetime m_expiration;
-   color    m_arrow_color;
-   
-   void Init(int ticket, string symbol, int cmd, double volume, double price, int slippage, double stoploss, double takeprofit, string comment=NULL, int magic=0, datetime expiration=0, color arrow_color = clrNONE)
-   {
-      m_ticket = ticket; m_symbol = symbol; m_cmd = cmd; m_volume = volume; m_price = price; m_stoploss = stoploss; m_takeprofit = takeprofit;
-      m_comment = comment; m_magic = magic; m_expiration = expiration; m_arrow_color = arrow_color;
-   }
-   void Init(const MQLOrder& order)
-   {
-      Init(order.m_ticket, order.m_symbol, order.m_cmd, order.m_volume, order.m_price, order.m_slippage, order.m_stoploss, order.m_takeprofit, order.m_comment, order.m_magic, order.m_expiration, order.m_arrow_color);
-   }
-   void Init(const MQLRequestOpen& request)
-   {
-      Init(0, request.m_symbol, request.m_cmd, request.m_volume, request.m_price, request.m_slippage, request.m_stoploss, request.m_takeprofit, request.m_comment, request.m_magic, request.m_expiration, request.m_arrow_color);
-   }
-   void Init()
-   {
-      Init(0, NULL, 0, 0, 0, 0, 0, 0);
-   }
-};
+#include <Exchange\Model.mqh>
 
 class Trade
 {
@@ -251,12 +150,12 @@ protected:
    
    static bool CheckAndCorrectRequest(MQLRequestOpen& request, bool requestVolumeCorrect, bool requestPriceCorrect, bool stoplossCorrect, bool takeprofitCorrect)
    {
-      double point = SymbolInfoDouble(request.m_symbol, SYMBOL_POINT);
-      double minstoplevel = SymbolInfoInteger(request.m_symbol, SYMBOL_TRADE_STOPS_LEVEL) * point;
+      double point = SymbolInfoDouble(CharArrayToString(request.m_symbol), SYMBOL_POINT);
+      double minstoplevel = SymbolInfoInteger(CharArrayToString(request.m_symbol), SYMBOL_TRADE_STOPS_LEVEL) * point;
       double spread = request.m_tick.ask - request.m_tick.bid;
       if (request.m_cmd == OP_BUY)  request.m_price = request.m_tick.ask;
       if (request.m_cmd == OP_SELL) request.m_price = request.m_tick.bid;
-      if (!CheckAndCorrectVolume(request.m_symbol, request.m_volume, requestVolumeCorrect))   return false;
+      if (!CheckAndCorrectVolume(CharArrayToString(request.m_symbol), request.m_volume, requestVolumeCorrect))   return false;
       if (!CheckAndCorrectPrice(request.m_cmd, request.m_tick.ask, request.m_tick.bid, minstoplevel, requestPriceCorrect, request.m_price, request.m_error)) return false;
       
       double priceForCheckStopOrder = request.m_price;
@@ -365,7 +264,7 @@ public:
       bool criticalError = false; int ticket = -1;
       bool result = false;
       if (!(IsConnected() && IsExpertEnabled()))   return false;
-      if (!SymbolExists(request.m_symbol)) return false;
+      if (!SymbolExists(CharArrayToString(request.m_symbol))) return false;
       
       if (!CmdExists(request.m_cmd))   return false;
       
@@ -375,11 +274,11 @@ public:
          while (!IsTradeAllowed() && i > 0)   { Sleep(10); i--; }
          int index = ArrayResize(requestTry, ArraySize(requestTry) + 1) - 1;
          requestTry[index].Init(request);
-         SymbolInfoTick(requestTry[index].m_symbol, requestTry[index].m_tick);
+         SymbolInfoTick(CharArrayToString(requestTry[index].m_symbol), requestTry[index].m_tick);
          
          if (!CheckAndCorrectRequest(requestTry[index], requestVolumeCorrect, requestPriceCorrect, stoplossCorrect, takeprofitCorrect)) break;
          
-         int digits = SymbolInfoInteger(requestTry[index].m_symbol, SYMBOL_DIGITS);
+         int digits = SymbolInfoInteger(CharArrayToString(requestTry[index].m_symbol), SYMBOL_DIGITS);
          double stoploss, takeprofit;
          if (requestTry[index].m_cmd == OP_BUY || requestTry[index].m_cmd == OP_BUY || requestTry[index].m_cmd == OP_BUY)
          {
@@ -393,14 +292,14 @@ public:
          }
          
          ulong timeExecution = GetMicrosecondCount();
-         ticket = OrderSend(requestTry[index].m_symbol,
+         ticket = OrderSend(CharArrayToString(requestTry[index].m_symbol),
                             requestTry[index].m_cmd,
                             NormalizeDouble(requestTry[index].m_volume, 2),
                             NormalizeDouble(requestTry[index].m_price, digits),
                             requestTry[index].m_slippage,
                             NormalizeDouble(stoploss, digits),
                             NormalizeDouble(takeprofit, digits),
-                            requestTry[index].m_comment,
+                            CharArrayToString(requestTry[index].m_comment),
                             requestTry[index].m_magic,
                             requestTry[index].m_expiration,
                             requestTry[index].m_arrow_color);

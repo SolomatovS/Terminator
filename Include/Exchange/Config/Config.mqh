@@ -291,6 +291,18 @@ private:
                if (dHunter != NULL)
                {
                   ParseDeviationManager(dHunter, monitor.m_managers.m_dHunter);
+                  
+                  result = dHunter.getDouble("Lots", monitor.m_managers.m_dHunter.m_lots);
+                  if (!result)
+                  {
+                     Print(__FUNCTION__, ": not parse 'Defaults:Monitor:Managers:DHunter:Lots'. stop parsing.");
+                  }
+                  
+                  result = dHunter.getInt("Magic", monitor.m_managers.m_dHunter.m_magic);
+                  if (!result)
+                  {
+                     Print(__FUNCTION__, ": not parse 'Defaults:Monitor:Managers:DHunter:Magic'. stop parsing.");
+                  }
                }
                if (CheckPointer(dHunter) == POINTER_DYNAMIC)   delete dHunter;
                

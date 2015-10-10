@@ -320,6 +320,8 @@ protected:
       double spreadGeneral = spreadHis + spreadAlien;
       double spreadAverage = ((his.MQLTick.ask - his.MQLTick.bid) + (his.MQLTickBefore.ask - his.MQLTickBefore.bid)) / 2;
       double spreadAverageAlien = ((alien.MQLTick.ask - alien.MQLTick.bid) + (alien.MQLTickBefore.ask - alien.MQLTickBefore.bid)) / 2;
+      
+      string orders = his.OrdersToString();
       string text = StringConcatenate(
          company, " : ", login, "\n",
          "-------------------------------------------------------------------", "\n",
@@ -341,7 +343,7 @@ protected:
          "  Buy:                " , DoubleToString(NormalizeDouble(spreadGeneral, 5) > 0 ? pointBuy / spreadGeneral : 0,  2), " sp.    |   ", DoubleToString(pointBuy,  5), " pt.", "\n",
          "  Sell:                 ", DoubleToString(NormalizeDouble(spreadGeneral, 5) > 0 ? pointSell / spreadGeneral : 0, 2), " sp.    |   ", DoubleToString(pointSell, 5), " pt.", "\n",
          //"     Stop quotes: ", string(status), "\n",
-         "-------------------------------------------------------------------", "\n\n"
+         "-------------------------------------------------------------------", "\n", orders, "\n", "-------------------------------------------------------------------"
       );
    }
 };

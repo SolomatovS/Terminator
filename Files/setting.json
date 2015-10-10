@@ -142,6 +142,8 @@
       "SymbolMemory":   "EURUSD",
       "Managers": {
         "DHunter": {
+          "Lots": 1,
+          "Magic": 111,
           "Filters": {
             "MinPointsDeviation": {
               "DeviationBuy": 0.00010,
@@ -412,6 +414,32 @@
     {
       "SymbolTerminal": "GOLD",
       "SymbolMemory":   "XAUUSD",
+      "Managers": {
+        "DHunter": {
+          "Filters": {
+            "MinPointsDeviation": {
+              "DeviationBuy": 0.5,
+              "DeviationSell": 0.5
+            },
+            "MinGeneralSpreadsDeviation": {
+              "MinGeneralSpreads": 2,
+              "MinGeneralPoints": 0.4,
+            }
+          }
+        },
+        "StopQuotesNotificator": {
+          "Filters": {
+            "MinPointsDeviation": {
+              "DeviationBuy": 0.5,
+              "DeviationSell": 0.5
+            }
+          }
+        }
+      }
+    },
+    {
+      "SymbolTerminal": "AUDUSD",
+      "SymbolMemory":   "AUDUSD",
       "Managers": {
         "DHunter": {
           "Filters": {
