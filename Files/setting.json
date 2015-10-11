@@ -144,6 +144,8 @@
         "DHunter": {
           "Lots": 1,
           "Magic": 111,
+          "Type": "Master",
+          "SignalClosePosition": 0.0003,
           "Filters": {
             "MinPointsDeviation": {
               "DeviationBuy": 0.00010,

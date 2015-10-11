@@ -278,11 +278,13 @@ private:
       return (TimeGMT() - alien.LastUpdateExpert) > m_timeOutSettings.m_timeOutExpertSeconds;
    }
    
+protected:
    bool TradeAllowed(SData& his, SData& alien)
    {
       return (his.isTradeAllowed && alien.isTradeAllowed);
    }
    
+private:
    bool Filtration(SData &his, SData &alien, int& typeOrder)
    {
       int size = ArraySize(m_filters); int i = 0;
@@ -295,6 +297,8 @@ private:
       
       return result;
    }
+   
+protected:
    void Log(SData& datas[], int index)
    {
       if (!m_logger) return;
@@ -307,11 +311,11 @@ private:
       }
       Comment(m_log);
    }
-protected:
    string Log(SData &his, SData &alien)
    {
       string company = CharArrayToString(alien.Terminal.Company);
       int login = alien.Terminal.Login;
+      int digits = SymbolInfoInteger(CharArrayToString(his.TSymbol), SYMBOL_DIGITS);
       
       double pointBuy  = alien.MQLTick.bid - his.MQLTick.ask;
       double pointSell = his.MQLTick.bid - alien.MQLTick.ask;
@@ -322,28 +326,51 @@ protected:
       double spreadAverageAlien = ((alien.MQLTick.ask - alien.MQLTick.bid) + (alien.MQLTickBefore.ask - alien.MQLTickBefore.bid)) / 2;
       
       string orders = his.OrdersToString();
+      
+      double sum = OrdersSum(his, alien);
+      
       string text = StringConcatenate(
          company, " : ", login, "\n",
          "-------------------------------------------------------------------", "\n",
          "                           alien                this   ", "\n",
-         "  spread              ", DoubleToString(alien.MQLTick.ask - alien.MQLTick.bid, 5), "    |    ", DoubleToString(his.MQLTick.ask - his.MQLTick.bid, 5), "\n",
-         "  ask                  ", DoubleToString(alien.MQLTick.ask, 5), "    |    ", DoubleToString(his.MQLTick.ask, 5), "\n",
-         "  bid                   ", DoubleToString(alien.MQLTick.bid, 5), "    |    ", DoubleToString(his.MQLTick.bid, 5), "\n"
+         "  spread              ", DoubleToString(alien.MQLTick.ask - alien.MQLTick.bid, digits), "    |    ", DoubleToString(his.MQLTick.ask - his.MQLTick.bid, digits), "\n",
+         "  ask                  ", DoubleToString(alien.MQLTick.ask, digits), "    |    ", DoubleToString(his.MQLTick.ask, digits), "\n",
+         "  bid                   ", DoubleToString(alien.MQLTick.bid, digits), "    |    ", DoubleToString(his.MQLTick.bid, digits), "\n"
          "-------------------------------------------------------------------", "\n",
-         "  spread before     ", DoubleToString(alien.MQLTickBefore.ask - alien.MQLTickBefore.bid, 5), "    |    ", DoubleToString(his.MQLTickBefore.ask - his.MQLTickBefore.bid, 5), "\n",
-         "  ask before         ", DoubleToString(alien.MQLTickBefore.ask, 5), "    |    ", DoubleToString(his.MQLTickBefore.ask, 5), "\n",
-         "  bid before          ", DoubleToString(alien.MQLTickBefore.bid, 5), "    |    ", DoubleToString(his.MQLTickBefore.bid, 5), "\n"
+         "  spread before     ", DoubleToString(alien.MQLTickBefore.ask - alien.MQLTickBefore.bid, digits), "    |    ", DoubleToString(his.MQLTickBefore.ask - his.MQLTickBefore.bid, digits), "\n",
+         "  ask before         ", DoubleToString(alien.MQLTickBefore.ask, digits), "    |    ", DoubleToString(his.MQLTickBefore.ask, digits), "\n",
+         "  bid before          ", DoubleToString(alien.MQLTickBefore.bid, digits), "    |    ", DoubleToString(his.MQLTickBefore.bid, digits), "\n"
          "-------------------------------------------------------------------", "\n");
        return text + StringConcatenate(
          "  TimeOut           ", DoubleToString(alien.TimeOutQuote * 0.000001, 1), " sec.     |    ", DoubleToString(his.TimeOutQuote * 0.000001, 1), " sec.\n",
          "  LastUpdate        ", TimeToString(alien.LastUpdateExpert, TIME_MINUTES|TIME_SECONDS), "    |    ", TimeToString(his.LastUpdateExpert, TIME_MINUTES|TIME_SECONDS), "\n",
-         "  Spread avg        ", DoubleToString(spreadAverageAlien, 5), "    |     ", DoubleToString(spreadAverage, 5), "    \n",
+         "  Spread avg        ", DoubleToString(spreadAverageAlien, digits), "    |     ", DoubleToString(spreadAverage, digits), "    \n",
          "  TradeAllowed      ", alien.isTradeAllowed, "        |      ", his.isTradeAllowed, "          \n",
          "-------------------------------------------------------------------", "\n",
-         "  Buy:                " , DoubleToString(NormalizeDouble(spreadGeneral, 5) > 0 ? pointBuy / spreadGeneral : 0,  2), " sp.    |   ", DoubleToString(pointBuy,  5), " pt.", "\n",
-         "  Sell:                 ", DoubleToString(NormalizeDouble(spreadGeneral, 5) > 0 ? pointSell / spreadGeneral : 0, 2), " sp.    |   ", DoubleToString(pointSell, 5), " pt.", "\n",
+         "  Buy:                " , DoubleToString(NormalizeDouble(spreadGeneral, digits) > 0 ? pointBuy / spreadGeneral : 0,  2), " sp.    |   ", DoubleToString(pointBuy,  digits), " pt.", "\n",
+         "  Sell:                 ", DoubleToString(NormalizeDouble(spreadGeneral, digits) > 0 ? pointSell / spreadGeneral : 0, 2), " sp.    |   ", DoubleToString(pointSell, digits), " pt.", "\n",
          //"     Stop quotes: ", string(status), "\n",
-         "-------------------------------------------------------------------", "\n", orders, "\n", "-------------------------------------------------------------------"
+         "-------------------------------------------------------------------", "\n", orders, "\n", "-------------------------------------------------------------------", "\n",
+         "  Orders sum        ", DoubleToString(sum, digits), " pt.\n", "-------------------------------------------------------------------", "\n"
       );
+   }
+   
+   double OrdersSum(SData &his, SData &alien, int magic = -1)
+   {
+      double sum = 0;
+      MQLOrder orders[]; ArrayCopy(orders, his.Orders); ArrayCopy(orders, alien.Orders, ArraySize(his.Orders));
+      for(int i = 0; i < ArraySize(orders); i++)
+      {
+         if (orders[i].m_ticket <= 0)  continue;
+         if (orders[i].m_magic == magic && magic != -1) continue;
+         
+         switch(orders[i].m_cmd)
+         {
+            case OP_BUY: sum += orders[i].m_closePrice - orders[i].m_price; break;
+            case OP_SELL:sum += orders[i].m_price - orders[i].m_closePrice; break;
+         }
+      }
+      
+      return sum;
    }
 };

@@ -10,11 +10,14 @@
 #include "DeviationQuotes.mqh"
 #include "..\Trade.mqh"
 
+
 class DHunter : DeviationQuotes
 {
    Trade    m_trader;
    double   m_lots;
    int      m_magic;
+   ETYPE_DHUNTER m_type;
+   double   m_signalClosePosition;
    
    bool     m_requestVolumeCorrect;
    bool     m_requestPriceCorrect;
@@ -23,7 +26,7 @@ class DHunter : DeviationQuotes
    int      m_tryOpenCount;
    
 public:
-   DHunter(FilterConfigurator* filterConfigurator, TIMEOUT& timeOutSettings, double lots, int magic, bool logger = true, bool enabler = true) :
+   DHunter(FilterConfigurator* filterConfigurator, TIMEOUT& timeOutSettings, double lots, int magic, ETYPE_DHUNTER type, double signalClosePosition, bool logger = true, bool enabler = true) :
       DeviationQuotes(filterConfigurator, timeOutSettings, logger, enabler)
    {
       m_requestVolumeCorrect = false;
@@ -33,15 +36,155 @@ public:
       m_tryOpenCount = 10;
       m_lots = lots;
       m_magic = magic;
+      m_type = type;
+      m_signalClosePosition = signalClosePosition;
    }
 protected:
+   virtual void VWork(SData& datas[], int index)
+   {
+      Log(datas, index);
+      for(int i = 0; i < ArraySize(datas); i++)
+      {
+         if (i == index) continue;
+         
+         int typeOrder = -1;
+         
+         if (m_type == m_master)
+         {
+            if(CheckStopQuotes(datas[index], datas[i], typeOrder))
+            {
+               ActionStopQuotes(datas[index], datas[i], typeOrder);
+            }
+            else
+            {
+               ActionNoStopQuotes(datas[index], datas[i]);
+            }
+         }
+         else if (m_type == m_slave)
+         {
+            Synchronization(datas[index], datas[i]);
+         }
+      }
+   }
+   void Synchronization(SData& his, SData& alien)
+   {
+      if (!TradeAllowed(his, alien))   return;
+      
+      // Сначала открываем те ордера, которых нет в терминале slave
+      for(int i = 0; i < ArraySize(alien.Orders); i++)
+      {
+         if (alien.Orders[i].m_ticket <= 0)  continue;
+         if (alien.Orders[i].m_magic != m_magic)   continue;
+         
+         SynchronizationOpenOrder(alien.Orders[i]);
+      }
+      
+      // Потом закрываем те ордера, которых нет в терминале master
+      int total = OrdersTotal();
+      for(int i = 0; i < total; i++)
+      {
+         if (OrderSelect(i, SELECT_BY_POS, MODE_TRADES))
+         {
+            if (OrderMagicNumber() != m_magic)   continue;
+            
+            SynchronizationCloseOrder(OrderTicket(), alien);
+         }
+      }
+   }
+   void SynchronizationOpenOrder(MQLOrder& orderForSynchronization)
+   {
+      bool orderOpened = false;
+      for (int i = 0; i < OrdersTotal(); i++)
+      {
+         if (OrderSelect(i, SELECT_BY_POS, MODE_TRADES))
+         {
+            if (OrderMagicNumber() != orderForSynchronization.m_magic)  continue;
+            if (OrderType() != Reverse(orderForSynchronization.m_cmd))  continue;
+            
+            orderOpened = true; break;
+         }
+      }
+      if (!orderOpened)
+      {
+         Print(__FUNCTION__, ": Обнаружен не синхронизированный ордер, открываем его.");
+         MQLRequestOpen request; request.Init(orderForSynchronization);
+         request.m_cmd = Reverse(orderForSynchronization.m_cmd);
+         request.m_price = 0;
+         request.m_stoploss = orderForSynchronization.m_takeprofit; request.m_takeprofit = orderForSynchronization.m_stoploss;
+         
+         MQLRequestOpen try[];
+         MQLOrder order; order.Init();
+         
+         bool result = m_trader.OpenOrder(request,
+                                          order,
+                                          try,
+                                          m_tryOpenCount,
+                                          m_requestVolumeCorrect,
+                                          m_requestPriceCorrect,
+                                          m_requestStoplossCorrect,
+                                          m_requestTakeprofitCorrect);
+         
+         if (result)
+         {
+            Print(__FUNCTION__, ": Opened order #", order.m_ticket, "; cmd ", request.m_cmd, "; price ", DoubleToString(order.m_price, 5), ";");
+         }
+         else
+         {
+            Print(__FUNCTION__, ": Не удалось открыть ордер. Попробуем еще раз в следующую итерацию");
+         }
+      }
+   }
+   void SynchronizationCloseOrder(int ticket, SData& alien)
+   {
+      if (!OrderSelect(ticket, SELECT_BY_TICKET))   return;
+      
+      bool orderOpened = false;
+      int total = ArraySize(alien.Orders);
+      for (int i = 0; i < total; i++)
+      {
+         if (alien.Orders[i].m_ticket <= 0)        continue;
+         if (alien.Orders[i].m_magic != m_magic)   continue;
+         if (alien.Orders[i].m_cmd != Reverse(OrderType())) continue;
+         
+         orderOpened = true; break;
+      }
+      
+      if (!orderOpened)
+      {
+         MQLRequestClose request; request.Init();
+         FillRequest(request, OrderTicket(), alien);
+         request.m_price = 0;
+         MQLRequestClose try[];
+         bool result = m_trader.CloseOrDeleteOrder(
+                                       request,
+                                       try,
+                                       m_tryOpenCount,
+                                       m_requestVolumeCorrect,
+                                       m_requestPriceCorrect);
+         
+         if (result)
+         {
+            if (OrderSelect(OrderTicket(), SELECT_BY_TICKET))
+            {
+               Print(__FUNCTION__, ": Closed order #", OrderTicket(), "; cmd ", OrderType(), "; price ", DoubleToString(OrderClosePrice(), 5), ";");
+            }
+         }
+         else
+         {
+            Print(__FUNCTION__, ": Не удалось закрыть ордер #", ticket, ". Попробуем еще раз в следующую итерацию");
+         }
+      }
+   }
    virtual void ActionStopQuotes(SData& his, SData& alien, int typeOrder)
    {
       int total = OrdersTotal();
       string symbol = Symbol();
       bool isOpened = OrderIsOpened(symbol, m_magic, typeOrder);
       
-      if (isOpened) return;
+      if (isOpened)
+      {
+         
+      }
       else ActionOpenOrder(his, alien, typeOrder); return;
       
       /*
@@ -125,8 +268,21 @@ protected:
          }
       }
    }
-
+   
 private:
+   int Reverse(int type)
+   {
+      switch (type)
+      {
+         case OP_BUY: return OP_SELL; break;
+         case OP_SELL: return OP_BUY; break;
+         case OP_BUYLIMIT: return OP_SELLSTOP; break;
+         case OP_BUYSTOP: return OP_SELLLIMIT; break;
+         case OP_SELLLIMIT: return OP_BUYSTOP; break;
+         case OP_SELLSTOP: return OP_SELLLIMIT; break;
+      }
+      return -1;
+   }
    void FillRequest(MQLRequestOpen& request, SData& his, SData& alien)
    {
       //request.m_cmd = SignalDetection(his, alien);

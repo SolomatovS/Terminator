@@ -303,6 +303,24 @@ private:
                   {
                      Print(__FUNCTION__, ": not parse 'Defaults:Monitor:Managers:DHunter:Magic'. stop parsing.");
                   }
+                  
+                  string type = "";
+                  result = dHunter.getString("Type", type);
+                  if (!result)
+                  {
+                     Print(__FUNCTION__, ": not parse 'Defaults:Monitor:Managers:DHunter:Type'. stop parsing.");
+                  }
+                  else
+                  {
+                     if (StringCompare(type, "Master", false) == 0) monitor.m_managers.m_dHunter.m_type = m_master;
+                     if (StringCompare(type, "Slave", false) == 0) monitor.m_managers.m_dHunter.m_type = m_slave;
+                  }
+                  
+                  result = dHunter.getDouble("SignalClosePosition", monitor.m_managers.m_dHunter.m_signalClosePosition);
+                  if (!result)
+                  {
+                     Print(__FUNCTION__, ": not parse 'Defaults:Monitor:Managers:DHunter:SignalClosePosition'. stop parsing.");
+                  }
                }
                if (CheckPointer(dHunter) == POINTER_DYNAMIC)   delete dHunter;
                
