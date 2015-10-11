@@ -327,7 +327,7 @@ public:
       if (!isOpened())  return false;
       
    	uchar bytes[]; ToByte(size, bytes);
-   	int result = Write(bytes, 0, size);
+   	int result = Write(bytes, 0, sizeof(size));
    	
    	if (result <= 0)
    	{
@@ -555,7 +555,7 @@ public:
       ToByte(value, value_char);
       
       m_error = 0;
-      int result = Write(value_char, m_offset + m_headSize, size);
+      int result = Write(value_char, offset + m_headSize, size);
       if(result <= 0 || m_error != 0)
       {
          if (result == -2) // try memory grow
