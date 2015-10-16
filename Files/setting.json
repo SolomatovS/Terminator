@@ -93,6 +93,60 @@
         }
       }
     }
+  },
+  {
+    "SymbolTerminal": "XAUUSD",
+    "SymbolMemory":   "XAUUSD",
+    "Managers": {
+      "DHunter": {
+        "Signal": {
+          "Open": {
+            "MinSpreads": 2,
+            "MinPoints": 1.50
+          },
+          "Close": {
+            "MinSpreads": 1,
+            "MinPoints": 1.0
+          }
+        }
+      }
+    }
+  },
+  {
+    "SymbolTerminal": "AUDUSD",
+    "SymbolMemory":   "AUDUSD",
+    "Managers": {
+      "DHunter": {
+        "Signal": {
+          "Open": {
+            "MinSpreads": 2,
+            "MinPoints": 0.0003
+          },
+          "Close": {
+            "MinSpreads": 1,
+            "MinPoints": 0.0001
+          }
+        }
+      }
+    }
+  },
+  {
+    "SymbolTerminal": "USDCAD",
+    "SymbolMemory":   "USDCAD",
+    "Managers": {
+      "DHunter": {
+        "Signal": {
+          "Open": {
+            "MinSpreads": 2,
+            "MinPoints": 0.0009
+          },
+          "Close": {
+            "MinSpreads": 1,
+            "MinPoints": 0.0005
+          }
+        }
+      }
+    }
   }
   ]
 }
