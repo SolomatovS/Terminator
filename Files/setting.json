@@ -19,7 +19,7 @@
           "TradeSetting": {
             "Lots": 1,
             "Magic": 0,
-            "TryOpenCount": 5,
+            "TryOpenCount": 1,
             "RequestVolumeCorrect": false,
             "RequestPriceCorrect": false,
             "RequestStoplossCorrect": false,

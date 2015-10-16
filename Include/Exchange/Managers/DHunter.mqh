@@ -81,11 +81,17 @@ protected:
       
       if (SignalClose(deviationBuy, deviationSell, spreadBuy, spreadSell, typeOrder))
       {
+         Print(__FUNCTION__, ": Сигнал: Закрыть позицию. Расхождение Buy: ", deviationBuy, ", Расхождение Sell: ", deviationSell, ", Спред: ", spread);
+         Print(__FUNCTION__, ": BID = ", his.MQLTick.bid, ", BID alien = ", alien.MQLTick.bid);
+         Print(__FUNCTION__, ": ASK = ", his.MQLTick.ask, ", ASK alien = ", alien.MQLTick.ask);
          ActionSignalCloseOrders(his, alien, typeOrder);
       }
       
       if (SignalOpen(deviationBuy, deviationSell, spreadBuy, spreadSell, typeOrder))
       {
+         Print(__FUNCTION__, ": Сигнал: Открыть позицию. Расхождение Buy: ", deviationBuy, ", Расхождение Sell: ", deviationSell, ", Спред: ", spread);
+         Print(__FUNCTION__, ": BID = ", his.MQLTick.bid, ", BID alien = ", alien.MQLTick.bid);
+         Print(__FUNCTION__, ": ASK = ", his.MQLTick.ask, ", ASK alien = ", alien.MQLTick.ask);
          ActionSignalOpenOrder(his, alien, typeOrder);
       }
    }
