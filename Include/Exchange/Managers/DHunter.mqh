@@ -234,7 +234,8 @@ protected:
    }
    void ActionOpenOrder(SData& his, SData& alien, int typeOrder)
    {
-      MQLRequestOpen request; request.Init(); request.m_cmd = typeOrder;
+      MQLRequestOpen request; request.Init();
+      request.m_cmd = typeOrder;
       FillRequest(request, his, alien);
       if (request.m_cmd == -1)
       {
@@ -353,7 +354,7 @@ private:
    }
    void FillRequestVolume(double& volume)
    {
-      volume = 0.01;
+      volume = m_dHunterSetting.m_tradeSetting.m_lots;
    }
    
    bool OrderUnic(string symbol, int magic, int typeOrder = -1)
