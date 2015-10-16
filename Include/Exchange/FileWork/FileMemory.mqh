@@ -365,7 +365,7 @@ private:
       m_error = kernel32::GetLastError();
       if (m_hMem == NULL || m_error != 0)
       {
-         this.Close(); return false;
+         m_hMem = NULL; return false;
       }
       
       bool resultSetFilledSize = FilledSize(filledSize);
@@ -391,13 +391,13 @@ private:
       m_error = kernel32::GetLastError();
       if (m_hMem == NULL || m_error != 0)
       {
-         if (m_error == 2)
+         if (m_error == 5)
          {
             Print(__FUNCTION__, ": файл '", m_fileName, "' уже открыт. Что бы открыть его заного, неоьбходимо сначала закрыть существующий");
             return true;
          }
          
-         this.Close(); return false;
+         m_hMem = NULL; return false;
       }
       
       return true;

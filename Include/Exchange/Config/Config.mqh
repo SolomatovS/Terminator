@@ -130,7 +130,7 @@ private:
       {
       	Print(__FUNCTION__, ": not parse 'Defaults:Monitor:Managers:DeviationQuotes:Logger'. stop parsing.");
       }
-
+      
    	// STOP QUOTES NOTIFICATOR FILTERS
    	JSONObject* filters = object.getObject("Filters");
    	if (filters != NULL)
@@ -246,6 +246,125 @@ private:
    	return result;
    }
    
+   bool ParseDHunter(JSONObject& managers, DHUNTER& setting)
+   {
+               JSONObject* dHunter = managers.getObject("DHunter");
+               if (dHunter != NULL)
+               {
+                  // ENABLER
+                  bool result = dHunter.getBool("Enabler", setting.m_enabler);
+                  if (!result)
+                  {
+                  	Print(__FUNCTION__, ": not parse 'Defaults:Monitor:Managers:DeviationQuotes:Enabler'. stop parsing.");
+                  }
+                  
+                  // Logger
+                  result = dHunter.getBool("Logger", setting.m_logger);
+                  if (!result)
+                  {
+                  	Print(__FUNCTION__, ": not parse 'Defaults:Monitor:Managers:DeviationQuotes:Logger'. stop parsing.");
+                  }
+                  
+                  JSONObject* tradeSetting = dHunter.getObject("TradeSetting");
+                  if (tradeSetting != NULL)
+                  {
+                     result = tradeSetting.getDouble("Lots", setting.m_tradeSetting.m_lots);
+                     if (!result)
+                     {
+                        Print(__FUNCTION__, ": not parse 'Defaults:Monitor:Managers:DHunter:Lots'. stop parsing.");
+                     }
+                     
+                     result = tradeSetting.getInt("Magic", setting.m_tradeSetting.m_magic);
+                     if (!result)
+                     {
+                        Print(__FUNCTION__, ": not parse 'Defaults:Monitor:Managers:DHunter:Magic'. stop parsing.");
+                     }
+                     
+                     result = tradeSetting.getInt("TryOpenCount", setting.m_tradeSetting.m_tryOpenCount);
+                     if (!result)
+                     {
+                        Print(__FUNCTION__, ": not parse 'Defaults:Monitor:Managers:DHunter:TradeSetting:m_tryOpenCount'. stop parsing.");
+                     }
+                     
+                     result = tradeSetting.getBool("RequestVolumeCorrect", setting.m_tradeSetting.m_requestVolumeCorrect);
+                     if (!result)
+                     {
+                        Print(__FUNCTION__, ": not parse 'Defaults:Monitor:Managers:DHunter:TradeSetting:RequestVolumeCorrect'. stop parsing.");
+                     }
+                     
+                     result = tradeSetting.getBool("RequestPriceCorrect", setting.m_tradeSetting.m_requestPriceCorrect);
+                     if (!result)
+                     {
+                        Print(__FUNCTION__, ": not parse 'Defaults:Monitor:Managers:DHunter:TradeSetting:RequestPriceCorrect'. stop parsing.");
+                     }
+                     
+                     result = tradeSetting.getBool("RequestStoplossCorrect", setting.m_tradeSetting.m_requestStoplossCorrect);
+                     if (!result)
+                     {
+                        Print(__FUNCTION__, ": not parse 'Defaults:Monitor:Managers:DHunter:TradeSetting:RequestStoplossCorrect'. stop parsing.");
+                     }
+                     
+                     result = tradeSetting.getBool("RequestTakeprofitCorrect", setting.m_tradeSetting.m_requestTakeprofitCorrect);
+                     if (!result)
+                     {
+                        Print(__FUNCTION__, ": not parse 'Defaults:Monitor:Managers:DHunter:TradeSetting:RequestTakeprofitCorrect'. stop parsing.");
+                     }
+                  }
+                  if (CheckPointer(tradeSetting) == POINTER_DYNAMIC)  delete tradeSetting;
+                  
+                  string type = "";
+                  result = dHunter.getString("Type", type);
+                  if (!result)
+                  {
+                     Print(__FUNCTION__, ": not parse 'Defaults:Monitor:Managers:DHunter:Type'. stop parsing.");
+                  }
+                  else
+                  {
+                     if (StringCompare(type, "Master", false) == 0) setting.m_type = m_master;
+                     if (StringCompare(type, "Slave", false) == 0) setting.m_type = m_slave;
+                  }
+                  
+                  JSONObject* signal = dHunter.getObject("Signal");
+                  if (signal != NULL)
+                  {
+                     JSONObject* open = signal.getObject("Open");
+                     if (open != NULL)
+                     {
+                        result = open.getDouble("MinSpreads", setting.m_signalOpen.m_minSpreads);
+                        if (!result)
+                        {
+                           Print(__FUNCTION__, ": not parse 'Defaults:Monitor:Managers:DHunter:Signal:Open:MinSpreads'. stop parsing.");
+                        }
+                        result = open.getDouble("MinPoints", setting.m_signalOpen.m_minPoints);
+                        if (!result)
+                        {
+                           Print(__FUNCTION__, ": not parse 'Defaults:Monitor:Managers:DHunter:Signal:Open:MinPoints'. stop parsing.");
+                        }
+                     }
+                     if (CheckPointer(open) == POINTER_DYNAMIC)   delete open;
+                     
+                     JSONObject* close = signal.getObject("Close");
+                     if (close != NULL)
+                     {
+                        result = close.getDouble("MinSpreads", setting.m_signalClose.m_minSpreads);
+                        if (!result)
+                        {
+                           Print(__FUNCTION__, ": not parse 'Defaults:Monitor:Managers:DHunter:Signal:Close:MinSpreads'. stop parsing.");
+                        }
+                        result = close.getDouble("MinPoints", setting.m_signalClose.m_minPoints);
+                        if (!result)
+                        {
+                           Print(__FUNCTION__, ": not parse 'Defaults:Monitor:Managers:DHunter:Signal:Close:MinPoints'. stop parsing.");
+                        }
+                     }
+                     if (CheckPointer(close) == POINTER_DYNAMIC)   delete close;
+                  }
+                  if (CheckPointer(signal) == POINTER_DYNAMIC)   delete signal;
+               }
+               if (CheckPointer(dHunter) == POINTER_DYNAMIC)   delete dHunter;
+               return true;
+   }
+   
    bool ParseMonitor(JSONObject& defaultMonitor, MONITOR& monitor)
    {
             // PREFIX
@@ -283,46 +402,18 @@ private:
                Print(__FUNCTION__, ": not parse 'Defaults:Monitor:SymbolTerminal'. stop parsing.");
             }
             
+            // Master
+            result = defaultMonitor.getBool("Master", monitor.m_master);
+            if (!result)
+            {
+               Print(__FUNCTION__, ": not parse 'Defaults:Monitor:Master'. stop parsing.");
+            }
+            
             // MANAGERS
             JSONObject* managers = defaultMonitor.getObject("Managers");
             if (managers != NULL)
             {
-               JSONObject* dHunter = managers.getObject("DHunter");
-               if (dHunter != NULL)
-               {
-                  ParseDeviationManager(dHunter, monitor.m_managers.m_dHunter);
-                  
-                  result = dHunter.getDouble("Lots", monitor.m_managers.m_dHunter.m_lots);
-                  if (!result)
-                  {
-                     Print(__FUNCTION__, ": not parse 'Defaults:Monitor:Managers:DHunter:Lots'. stop parsing.");
-                  }
-                  
-                  result = dHunter.getInt("Magic", monitor.m_managers.m_dHunter.m_magic);
-                  if (!result)
-                  {
-                     Print(__FUNCTION__, ": not parse 'Defaults:Monitor:Managers:DHunter:Magic'. stop parsing.");
-                  }
-                  
-                  string type = "";
-                  result = dHunter.getString("Type", type);
-                  if (!result)
-                  {
-                     Print(__FUNCTION__, ": not parse 'Defaults:Monitor:Managers:DHunter:Type'. stop parsing.");
-                  }
-                  else
-                  {
-                     if (StringCompare(type, "Master", false) == 0) monitor.m_managers.m_dHunter.m_type = m_master;
-                     if (StringCompare(type, "Slave", false) == 0) monitor.m_managers.m_dHunter.m_type = m_slave;
-                  }
-                  
-                  result = dHunter.getDouble("SignalClosePosition", monitor.m_managers.m_dHunter.m_signalClosePosition);
-                  if (!result)
-                  {
-                     Print(__FUNCTION__, ": not parse 'Defaults:Monitor:Managers:DHunter:SignalClosePosition'. stop parsing.");
-                  }
-               }
-               if (CheckPointer(dHunter) == POINTER_DYNAMIC)   delete dHunter;
+               ParseDHunter(managers, monitor.m_managers.m_dHunter);
                
                JSONObject* amir = managers.getObject("Amir");
                if (amir != NULL)

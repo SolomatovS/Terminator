@@ -244,7 +244,6 @@ protected:
       return false;
    }
 
-private:
    bool BaseCheck(SData &his, SData &alien, int& typeOrder)
    {
       bool result = true;
@@ -252,16 +251,17 @@ private:
       {
          result = result && !ExpertTimeOut(alien);
          result = result && TradeAllowed(his, alien);
-         result = result && QuotesDeviation(his, alien, typeOrder); if (!result)   return false;
          result = result && QuotesTimeOut(his);
+         result = result && QuotesDeviation(his, alien, typeOrder);
       }
       return result;
    }
    
    // Check quotes deviation (BID > ASK || ASK < BID)
-   bool QuotesDeviation(SData &his, SData &alien, int& typeOrder)
+   virtual bool QuotesDeviation(SData &his, SData &alien, int& typeOrder)
    {
       if (!m_enabler) return false;
+      
       typeOrder = (alien.MQLTick.bid > his.MQLTick.ask) ? OP_BUY : ((alien.MQLTick.ask < his.MQLTick.bid) ? OP_SELL : -1);
       return (alien.MQLTick.bid > his.MQLTick.ask) || (alien.MQLTick.ask < his.MQLTick.bid);
    }
@@ -278,13 +278,11 @@ private:
       return (TimeGMT() - alien.LastUpdateExpert) > m_timeOutSettings.m_timeOutExpertSeconds;
    }
    
-protected:
    bool TradeAllowed(SData& his, SData& alien)
    {
       return (his.isTradeAllowed && alien.isTradeAllowed);
    }
    
-private:
    bool Filtration(SData &his, SData &alien, int& typeOrder)
    {
       int size = ArraySize(m_filters); int i = 0;
