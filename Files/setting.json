@@ -1,13 +1,13 @@
 {
-  "UpdateMilliSecondsExpert": 100,
+  "UpdateMilliSecondsExpert": 5,
   "Defaults": {
     "Monitor": {
       "SymbolMemory": "Default",
       "SymbolTerminal": "Default",
-      "UTC": 2,
+      "UTC": 1,
       "Prefix": "Local",
       "Updater": true,
-      "Master": false,
+      "Master": true,
       "Managers": {
         "Amir": {
           "Enabler": false
@@ -15,7 +15,8 @@
         "DHunter": {
           "Enabler": true,
           "Logger": true,
-          "Type": "Master",          
+          "ExpertTimeOut": 1,
+          "MinRestrictionPoint": 0.00030,
           "TradeSetting": {
             "Lots": 1,
             "Magic": 0,
@@ -28,11 +29,13 @@
           "Signal": {
             "Open": {
               "MinSpreads": 2,
-              "MinPoints": 0.0003
+              "MinPoints": 0.0003,
+              "MinTimeBarrierInMilliSeconds": 500
             },
             "Close": {
               "MinSpreads": 1,
-              "MinPoints": 0.0001
+              "MinPoints": 0.0001,
+              "MinTimeBarrierInMilliSeconds": 500
             }
           }
         }
@@ -87,8 +90,8 @@
             "MinPoints": 0.03
           },
           "Close": {
-            "MinSpreads": 1,
-            "MinPoints": 0.01
+            "MinSpreads": 2,
+            "MinPoints": 0.02
           }
         }
       }

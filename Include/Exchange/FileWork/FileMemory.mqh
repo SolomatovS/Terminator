@@ -186,7 +186,7 @@ public:
 	FileMemory(string fileName)
 	{
 	   m_headSize = 4;
-	   m_fileSize = 4096; // bytes
+	   m_fileSize = 0x10000; // bytes
 	   m_fileName = fileName;
 	   this.Seek(0);
 	   LastError();

@@ -265,6 +265,20 @@ private:
                   	Print(__FUNCTION__, ": not parse 'Defaults:Monitor:Managers:DeviationQuotes:Logger'. stop parsing.");
                   }
                   
+                  // MinRestrictionPoint
+                  result = dHunter.getDouble("MinRestrictionPoint", setting.m_minRestrictionPoint);
+                  if (!result)
+                  {
+                  	Print(__FUNCTION__, ": not parse 'Defaults:Monitor:Managers:DeviationQuotes:MinRestrictionPoint'. stop parsing.");
+                  }
+                  
+                  // ExpertTimeOut
+                  result = dHunter.getInt("ExpertTimeOut", setting.m_expertTimeOut);
+                  if (!result)
+                  {
+                  	Print(__FUNCTION__, ": not parse 'Defaults:Monitor:Managers:DeviationQuotes:ExpertTimeOut'. stop parsing.");
+                  }
+                  
                   JSONObject* tradeSetting = dHunter.getObject("TradeSetting");
                   if (tradeSetting != NULL)
                   {
@@ -340,6 +354,11 @@ private:
                         {
                            Print(__FUNCTION__, ": not parse 'Defaults:Monitor:Managers:DHunter:Signal:Open:MinPoints'. stop parsing.");
                         }
+                        result = open.getDouble("MinTimeBarrierInMilliSeconds", setting.m_signalOpen.m_minTimeBarrierInMilliSeconds);
+                        if (!result)
+                        {
+                           Print(__FUNCTION__, ": not parse 'Defaults:Monitor:Managers:DHunter:Signal:Open:MinTimeBarrierInMilliSeconds'. stop parsing.");
+                        }
                      }
                      if (CheckPointer(open) == POINTER_DYNAMIC)   delete open;
                      
@@ -355,6 +374,11 @@ private:
                         if (!result)
                         {
                            Print(__FUNCTION__, ": not parse 'Defaults:Monitor:Managers:DHunter:Signal:Close:MinPoints'. stop parsing.");
+                        }
+                        result = close.getDouble("MinTimeBarrierInMilliSeconds", setting.m_signalClose.m_minTimeBarrierInMilliSeconds);
+                        if (!result)
+                        {
+                           Print(__FUNCTION__, ": not parse 'Defaults:Monitor:Managers:DHunter:Signal:Close:MinTimeBarrierInMilliSeconds'. stop parsing.");
                         }
                      }
                      if (CheckPointer(close) == POINTER_DYNAMIC)   delete close;
