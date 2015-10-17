@@ -8,7 +8,7 @@
 #property strict
 
 #include "..\Model.mqh"
-#include "memmaplib.mqh"
+//#include "memmaplib.mqh"
 
 #define ERROR_FILE_NOT_FOUND		2
 //#define HANDLE32	int
@@ -25,6 +25,114 @@
    int MemSetSize(HANDLE32 hmem, uint size, int &err);
 #import
 */
+
+//типы данных
+#define BYTE				uchar
+#define DWORD				int
+#define BOOL				int
+#define LPTSTR			string
+#define LPCTSTR			const string
+
+#define PBYTE64			long
+#define LPVOID64		long
+#define LPCVOID64 	const long
+#define SIZE_T64		long
+#define HANDLE64		long
+#define INVALID_HANDLE_VALUE64 ((HANDLE64)(long)-1) 
+#define LPSECURITY_ATTRIBUTES64			long
+
+#define PBYTE32			int
+#define LPVOID32		int
+#define LPCVOID32 	const int
+#define SIZE_T32		int
+#define HANDLE32		int
+#define INVALID_HANDLE_VALUE32 ((HANDLE32)(int)-1) 
+#define LPSECURITY_ATTRIBUTES32			int
+
+// кончстанты
+#define PAGE_READWRITE								0x04     
+#define FILE_MAP_ALL_ACCESS 					SECTION_ALL_ACCESS
+#define STANDARD_RIGHTS_REQUIRED			(0x000F0000)
+#define SECTION_QUERY               	0x0001
+#define SECTION_MAP_WRITE           	0x0002
+#define SECTION_MAP_READ            	0x0004
+#define SECTION_MAP_EXECUTE         	0x0008
+#define SECTION_EXTEND_SIZE         	0x0010
+#define SECTION_MAP_EXECUTE_EXPLICIT	0x0020 // not included in SECTION_ALL_ACCESS
+#define SECTION_ALL_ACCESS						(STANDARD_RIGHTS_REQUIRED|SECTION_QUERY|SECTION_MAP_WRITE|SECTION_MAP_READ|SECTION_MAP_EXECUTE|SECTION_EXTEND_SIZE)
+#define FILE_MAPPING_SIZE 103056
+
+#import "kernel32.dll"
+	HANDLE64 OpenFileMappingW(DWORD dwDesiredAccess, BOOL bInheritHandle, LPCTSTR lpName);
+	// 64
+	HANDLE64 CreateFileMappingW(HANDLE64 hFile, LPSECURITY_ATTRIBUTES64 lpAttributes, DWORD flProtect, DWORD dwMaximumSizeHigh, DWORD dwMaximumSizeLow, LPCTSTR lpName);
+	LPVOID64 MapViewOfFile(HANDLE64 hFileMappingObject, DWORD dwDesiredAccess, DWORD dwFileOffsetHigh, DWORD dwFileOffsetLow, SIZE_T64 dwNumberOfBytesToMap);
+	BOOL UnmapViewOfFile(LPCVOID64 lpBaseAddress);
+	BOOL CloseHandle(HANDLE64 hObject);
+	// 32
+	HANDLE32 CreateFileMappingW(HANDLE32 hFile, LPSECURITY_ATTRIBUTES32 lpAttributes, DWORD flProtect, DWORD dwMaximumSizeHigh, DWORD dwMaximumSizeLow, LPCTSTR lpName);
+	LPVOID32 MapViewOfFile(HANDLE32 hFileMappingObject, DWORD dwDesiredAccess, DWORD dwFileOffsetHigh, DWORD dwFileOffsetLow, SIZE_T32 dwNumberOfBytesToMap);
+	BOOL UnmapViewOfFile(LPCVOID32 lpBaseAddress);
+	BOOL CloseHandle(HANDLE32 hObject);
+
+	int GetLastError();
+#import "msvcrt.dll"
+	// 64
+	long memset(uchar &Destination[], long c, int Length);
+	long memset(long Destination, long c, int Length);
+	long memcpy(uchar &Destination[], long Source, int Length);
+	long memcpy(long Destination, uchar &Source[], int Length);
+	long memcpy(uchar &Destination[], uchar &Source[], int Length);
+	// 32
+	int memset(uchar &Destination[], int c, int Length);
+	int memset(int Destination, int c, int Length);
+	int memcpy(uchar &Destination[], int Source, int Length);
+	int memcpy(int Destination, uchar &Source[], int Length);
+#import
+
+
+// определение 32/64 платформы
+//------------------------------------------------------------------	CreateFileMappingWX
+HANDLE64 CreateFileMappingWX(HANDLE64 hFile, LPSECURITY_ATTRIBUTES64 lpAttributes, DWORD flProtect, DWORD dwMaximumSizeHigh, DWORD dwMaximumSizeLow, LPCTSTR lpName)
+{
+	if (_IsX64) return(CreateFileMappingW(hFile, lpAttributes, flProtect, dwMaximumSizeHigh, dwMaximumSizeLow, lpName));
+	else return(CreateFileMappingW((HANDLE32)hFile, (LPSECURITY_ATTRIBUTES32)lpAttributes, flProtect, dwMaximumSizeHigh, dwMaximumSizeLow, lpName));
+}
+//------------------------------------------------------------------	MapViewOfFileX
+LPVOID64 MapViewOfFileX(HANDLE64 hFileMappingObject, DWORD dwDesiredAccess, DWORD dwFileOffsetHigh, DWORD dwFileOffsetLow, SIZE_T64 dwNumberOfBytesToMap)
+{
+	if (_IsX64) return(MapViewOfFile(hFileMappingObject, dwDesiredAccess, dwFileOffsetHigh, dwFileOffsetLow, dwNumberOfBytesToMap));
+	else return(MapViewOfFile((HANDLE32)hFileMappingObject, dwDesiredAccess, dwFileOffsetHigh, dwFileOffsetLow, (SIZE_T32)dwNumberOfBytesToMap));
+}
+//------------------------------------------------------------------	UnmapViewOfFileX
+BOOL UnmapViewOfFileX(LPCVOID64 lpBaseAddress)
+{
+	if (_IsX64) return(UnmapViewOfFile(lpBaseAddress));
+	else return(UnmapViewOfFile((int)lpBaseAddress));
+}
+//------------------------------------------------------------------	CloseHandleX
+BOOL CloseHandleX(HANDLE64 hObject)
+{
+	if (_IsX64) return(CloseHandle(hObject));
+	else return(CloseHandle((HANDLE32)hObject));
+}
+//------------------------------------------------------------------	memsetX
+long memsetX(uchar &Destination[], long c, int Length) { if (_IsX64) return(memset(Destination, c, Length)); else return(memset(Destination, (int)c, Length)); }
+//------------------------------------------------------------------	memsetX
+long memsetX(long Destination, long c, int Length) { if (_IsX64) return(memset(Destination, c, Length)); return(memset((int)Destination, (int)c, Length)); }
+//------------------------------------------------------------------	memcpyX
+long memcpyX(uchar &Destination[], long Source, int Length) { if (_IsX64) return(memcpy(Destination, Source, Length)); return(memcpy(Destination, (int)Source, Length)); }
+//------------------------------------------------------------------	memcpyX
+long memcpyX(long Destination, uchar &Source[], int Length) { if (_IsX64) return(memcpy(Destination, Source, Length)); return(memcpy((int)Destination, Source, Length)); }
+
+
+#define HEAD_MEM		4 // размер заголовка файла, для хранения его длины
+enum OpenFlags
+{
+   modeOpen    =(int)   0x00000,
+   modeCreate  =(int)   0x00001
+}; // Flag values
+
 
 template <typename T>
 void ToByte(const T &value, uchar &bytes[])
@@ -65,20 +173,21 @@ enum FlagOpenMode
 class FileMemory
 {
 private:
-   string m_fileName;
-   char m_fileNameChar[];
-   uint m_fileSize;
-   bool m_opened;
-   int m_error;
-   uint m_offset;
-   HANDLE32 m_hMem;
-   CMemMapApi API;
+   string   m_fileName;
+   //char     m_fileNameChar[];
+   uint     m_fileSize;
+   //uint     m_filledSize;
+   int      m_error;
+   uint     m_offset;
+   uint     m_headSize;
+   HANDLE64 m_hMem;
 
 public:
 	FileMemory(string fileName)
 	{
-	   Name(fileName);
-	   m_opened = false;
+	   m_headSize = 4;
+	   m_fileSize = 0x10000; // bytes
+	   m_fileName = fileName;
 	   this.Seek(0);
 	   LastError();
 	   
@@ -90,8 +199,8 @@ public:
 	};
 
 public: // Features
-   bool     isInit()    { return (m_opened && isInstance()); }
-   string   Name()  { return m_fileName; }
+   bool     isInit()    { return isOpened(); }
+   string   Name()      { return m_fileName; }
    int      LastError()
    {
       int error = m_error;
@@ -100,8 +209,7 @@ public: // Features
    }
 
 protected:
-   bool    isOpened()  { return m_opened; }
-   bool    isInstance(){ return (m_hMem != NULL); }
+   bool    isOpened()  { return (m_hMem != NULL); }
    virtual void Init()
    {
 	   CreateIfOpenNotFound();
@@ -113,48 +221,186 @@ public:
       //   this.Close();
    }
 private: // Methods
-   void Name(string fileName)  { m_fileName = fileName; StringToCharArray(m_fileName, m_fileNameChar); }
-   void OpenOrCreate(OpenFlags mode)
+   bool Close()
    {
-      if (!m_opened)
+      if (!isOpened())  return true;
+      
+      if (!CloseHandleX(m_hMem))
       {
-         switch(mode)
-         {
-            case modeOpen:   m_hMem = API.Open(m_fileName, -1, mode, m_error); break;
-            case modeCreate: m_hMem = API.Open(m_fileName, 100000, mode, m_error); break;
-         }
-         
-         if(m_hMem > 0)
-         {
-            m_opened = true;
-            Print("[", EnumToString(mode) ,"]: true: ", m_fileName, ". handle = " + string(m_hMem));
-         }
-         else
-         {
-            m_opened = false;
-            Print("[", EnumToString(mode) ,"]: false \"", m_fileName, "\"");
-         }
+         m_error = kernel32::GetLastError(); return false;
+      }
+      else
+      {
+         m_hMem = NULL; return true;
       }
    }
-   void Create()
+   void UnmapView(PBYTE64& view) // закрываем буфер
    {
-      OpenOrCreate(modeCreate);
+   	if (view != NULL) UnmapViewOfFileX(view);
+   	view = NULL; // закрываем хендл
    }
-   void Open()
+   PBYTE64 MapView() // получаем буфер
    {
-      OpenOrCreate(modeOpen);
+   	if (!isOpened())  return NULL;
+   	
+   	PBYTE64 view = (PBYTE64)MapViewOfFileX(m_hMem, FILE_MAP_ALL_ACCESS, 0, 0, m_fileSize); // получили представление файла
+   	m_error = kernel32::GetLastError();
+   	if (view == NULL && m_error > 0)
+   	{
+   	   Print(__FUNCTION__, ": MapViewOfFile вернул NULL. Нет представления файла '", m_fileName, "' в памяти. код ошибки: ", m_error);
+   	   return(NULL); // если ошибка представления
+   	}
+   	return(view); // возвращаем указатель на байтовый просмотр
    }
-   void Close()
+   int Read(uchar &value_char[], int offset, int size)
+   {
+      if (!isOpened())  return -1;
+      
+      if ((offset + size) > m_fileSize) return -1;
+      
+      PBYTE64 view = MapView();
+      m_error = 0;
+   	if (view == NULL)
+   	{
+   	   //if (view != NULL) UnmapView(view);
+   	   return -1; // получаем представление файла
+   	}
+      
+      int sizeInt = sizeof(int);
+      uchar bytes[]; ArrayResize(bytes, sizeInt);
+      memcpyX(bytes, view, sizeInt);
+      int filledSize = 0;
+      ByteTo(bytes, filledSize);
+      
+      if ((offset + size) > filledSize + m_headSize)
+      {
+         UnmapView(view); // закрыли просмотр 
+         return -1;
+      }
+      
+   	ArrayResize(value_char, size);
+   	
+   	memcpyX(value_char, view + offset, size); // взяли байтбуфер
+   	
+   	UnmapView(view); // закрыли просмотр 
+   	m_error = 0;
+   	
+   	return(ArraySize(value_char)); // число скопированных байт
+   }
+   int Write(uchar &value_char[], int offset, int size)
+   {
+      if (!isOpened())  return -1;
+      
+      if (ArraySize(value_char) <= 0)  return -1;
+      
+      if ((offset + size) > m_fileSize) return -1;
+      
+      PBYTE64 view = MapView();
+   	if (view == NULL)
+   	{
+   	   //if (view != NULL) UnmapView(view);
+   	   return -1; // получаем представление файла
+   	}
+   	/*
+   	int sizeInt = sizeof(int);
+      uchar bytes[]; ArrayResize(bytes, sizeInt);
+      memcpyX(bytes, view, sizeInt);
+      int filledSize = 0;
+      ByteTo(bytes, filledSize);
+      
+      if ((offset + size) > filledSize)
+      {
+         UnmapView(view); // закрыли просмотр 
+         return -1;
+      }
+      */
+   	memcpyX(view + offset, value_char, size); // взяли байтбуфер
+   	
+   	UnmapView(view); // закрыли просмотр 
+   	m_error = 0;
+   	
+   	return(ArraySize(value_char)); // число скопированных байт
+   }
+public:
+   bool FilledSize(DWORD size)
+   {
+      if (!isOpened())  return false;
+      
+   	uchar bytes[]; ToByte(size, bytes);
+   	int result = Write(bytes, 0, sizeof(size));
+   	
+   	if (result <= 0)
+   	{
+   	   Print(__FUNCTION__, ": Не удалось записать размер заполненных данных в файле");
+   	   return false;
+   	}
+   	return true;
+   }
+   int FilledSize()
+   {
+      if (!isOpened())  return -1;
+      
+   	uchar bytes[];
+   	
+   	int result = Read(bytes, 0, sizeof(int));
+   	if (result <= 0)
+   	{
+   	   Print(__FUNCTION__, ": Не удалось прочитать данные из файла '", m_fileName, "'");   return -1;
+   	}
+   	
+   	int size; ByteTo(bytes, size);
+   	
+   	return size;
+   }
+private:
+   bool Create(string fileName, int filledSize)
    {
       if (isOpened())
       {
-         if(m_hMem != NULL)
-         {
-            API.Close(m_hMem);
-            m_hMem = NULL;
-            m_opened = false;
-         }
+         Print(__FUNCTION__, ": файл '", m_fileName, "' уже открыт. Что бы создать его заного, неоьбходимо сначала закрыть существующий");
+         return true;
       }
+      
+      m_hMem = CreateFileMappingWX(INVALID_HANDLE_VALUE64, NULL, PAGE_READWRITE, 0, m_fileSize, fileName);
+      m_error = kernel32::GetLastError();
+      if (m_hMem == NULL || m_error != 0)
+      {
+         m_hMem = NULL; return false;
+      }
+      
+      bool resultSetFilledSize = FilledSize(filledSize);
+      m_error = kernel32::GetLastError();
+      if (!resultSetFilledSize || m_error != 0)
+      {
+         if (m_error == 2) return true;
+         
+         this.Close(); return false;
+      }
+      
+      return true;
+   }
+   bool Open()
+   {
+      if (isOpened())
+      {
+         Print(__FUNCTION__, ": файл '", m_fileName, "' уже открыт. Что бы открыть его заного, неоьбходимо сначала закрыть существующий");
+         return true;
+      }
+      
+      m_hMem = OpenFileMappingW(FILE_MAP_ALL_ACCESS, 0, m_fileName); // открываем объект памяти
+      m_error = kernel32::GetLastError();
+      if (m_hMem == NULL || m_error != 0)
+      {
+         if (m_error == 5)
+         {
+            Print(__FUNCTION__, ": файл '", m_fileName, "' уже открыт. Что бы открыть его заного, неоьбходимо сначала закрыть существующий");
+            return true;
+         }
+         
+         m_hMem = NULL; return false;
+      }
+      
+      return true;
    }
    void CreateIfOpenNotFound()
    {
@@ -163,31 +409,36 @@ private: // Methods
       int error = this.LastError();
       if (error == ERROR_FILE_NOT_FOUND)
       {
-         Print("[CreateIfOpenNotFound]: File not found. Try create...");
-         Create();
+         Print(__FUNCTION__, ": File not found. Try create...");
+         if (Create(m_fileName, 1))
+         {
+            Print(__FUNCTION__, ": OK, file created");
+         }
+         else
+         {
+            Print(__FUNCTION__, ": Falue, file not created");
+         }
       }
-      else Print("[CreateIfOpenNotFound]: file not opened");
+      else Print(__FUNCTION__, ": file not opened");
    }
 
 public:
    uint Size()
    {
-      return API.GetSize(m_hMem, m_error);
+      return m_fileSize;
    }
-   void Size(uint size)
-   {
-      API.SetSize(m_hMem, size, m_error);
-   }
+   
    uint Tell()
    {
-      if (!isInit()) return 0;
+      if (!isOpened()) return 0;
+      
       return m_offset;
    }
    void Seek(uint offset, const ENUM_FILE_POSITION origin = SEEK_SET)
    {
-      if (!isInit()) return;
+      if (!isOpened()) return;
       
-      uint size = this.Size();
+      int size = this.FilledSize();
    	if (origin==SEEK_SET) m_offset = offset;
    	if (origin==SEEK_CUR) m_offset += offset;
    	if (origin==SEEK_END) m_offset = size - offset;
@@ -197,32 +448,33 @@ public:
    }
    bool IsEnding()
    {
-      if (!isInit()) return false;
+      if (!isOpened()) return true;
       
-      return (m_offset >= this.Size());
+      return (m_offset >= this.FilledSize());
    }
    bool Grow(uint addSize)
    {
-      if (!isInit()) return false;
+      if (!isOpened()) return false;
       
-      uint size = this.Size();
+      uint size = this.FilledSize();
       uint newSize = size + addSize;
       
-      if (newSize <= 0 ||  this.Size() > newSize)
+      if (newSize <= 0 || size > newSize)
       {
-         Print("[Grow]: attempt allocate incorrect new file size. Old = ", this.Size(), ", New = ", newSize);
+         Print("[Grow]: attempt allocate incorrect new file size. Old = ", size, ", New = ", newSize);
          return false;
       }
-      Print("[Grow]: Add ", addSize, " byte");
-      m_hMem = API.Grows(m_hMem, m_fileName, newSize, m_error);
-      if (m_hMem <= 0)
+      if (newSize > this.Size())
       {
-         Print("[Grow]: attampt allocate new file size. error = ", m_error);
-         m_opened = false;
-         m_hMem = NULL;
+         Print(__FUNCTION__, "Невозможно увеличить размер буффера, т.к. он превышысет размер файла.");
          return false;
-      }      
-      return true;
+      }
+      
+      Print("[Grow]: Add ", addSize, " byte");
+      
+      return FilledSize(newSize);
+      
+      //return true;
    }
    
    template<typename T>
@@ -232,8 +484,9 @@ public:
       
       int size = sizeof(T);
       uchar value_char[]; ArrayResize(value_char, size); ArrayInitialize(value_char, 0);
-      int result = API.Read(m_hMem, value_char, m_offset, size, m_error);
-      this.Seek(result, SEEK_CUR);
+      
+      int result = Read(value_char, m_offset + m_headSize, size);
+      
       if(result < size || m_error != 0)
       {
          //Print("[Read T]: cannot read value, error code: ", m_error);
@@ -241,6 +494,7 @@ public:
       }
       else
       {
+         this.Seek(result, SEEK_CUR);
          ByteTo(value_char, value);
          return true;
       }
@@ -260,6 +514,7 @@ public:
             //Print("[Read T[]]: read array [", i, "]");
             ArrayResize(array, i);
             count = i;
+            //if (i == 0) return false;
             return true;
          }
          array[i] = value;
@@ -285,18 +540,23 @@ public:
       if (!isInit()) return false;
       
       uint size = sizeof(T);
-      uint fileSize = this.Size();
-      uint offset = this.Tell();
+      int fileSize = this.FilledSize();
+      int offset = this.Tell();
       if (size + offset > fileSize)
       {
-         this.Grow(offset + size - fileSize);
+         if (!this.Grow(offset + size - fileSize))
+         {
+            Print(__FUNCTION__, ": не удалось увеличить размер памяти. Запись данных невозможна");
+            return false;
+         }
       }
       
       uchar value_char[];
       ToByte(value, value_char);
       
-      int result = API.Write(m_hMem, value_char, m_offset, size, m_error);
-      if(result != 0 || m_error != 0)
+      m_error = 0;
+      int result = Write(value_char, offset + m_headSize, size);
+      if(result <= 0 || m_error != 0)
       {
          if (result == -2) // try memory grow
          {
@@ -326,7 +586,6 @@ public:
             Print("[Write T[]]: cannot write array");
             return false;
          }
-
       }
       return true;
    }
@@ -460,7 +719,7 @@ public:
                }
             }
             // deallocate memory
-            file.Size(sizeof(SHead));
+            file.FilledSize(sizeof(SHead));
             file.Seek(sizeof(SHead));
             if (!file.Write(datasNew))
             {
