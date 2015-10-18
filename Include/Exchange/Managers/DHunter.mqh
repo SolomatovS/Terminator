@@ -30,7 +30,13 @@ protected:
       {
          if (i == index) continue;
          
-         if (datas[index].Master)
+         bool master = false;
+         
+         bool sync = isSync(datas[index], datas[i]);
+         if (!sync)  master = isMaster(datas[index], datas[i]);
+         else        master = true;
+         
+         if (master/*datas[index].Master*/)
          {
             SignalProcessing(datas[index], datas[i]);
          }
@@ -54,6 +60,11 @@ protected:
    bool SignalAllowed(ulong timeOutQuote, double minTimeBarrierInMilliSeconds)
    {
       return NormalizeDouble(timeOutQuote / 1000, 2) < NormalizeDouble(minTimeBarrierInMilliSeconds, 2);
+   }
+   
+   bool isMaster(SData& his, SData& alien)
+   {
+      return his.LastTimeTransaction > alien.LastTimeTransaction;
    }
       
    // Check quotes deviation (BID > ASK || ASK < BID)
@@ -121,6 +132,48 @@ protected:
       
       return (closeBuy || closeSell);
    }
+   
+   bool isSync(SData& his, SData& alien)
+   {
+      for(int i = 0; i < ArraySize(alien.Orders); i++)
+      {
+         if (alien.Orders[i].m_ticket <= 0)  continue;
+         if (alien.Orders[i].m_magic != m_dHunterSetting.m_tradeSetting.m_magic)   continue;
+         if (CharArrayToString(alien.Orders[i].m_symbol) != Symbol()) continue;
+         
+         bool isSync = false;
+         for (int j = 0; j < ArraySize(his.Orders); j++)
+         {
+            if (his.Orders[i].m_ticket <= 0)  continue;
+            if (his.Orders[i].m_magic != m_dHunterSetting.m_tradeSetting.m_magic)   continue;
+            if (CharArrayToString(his.Orders[i].m_symbol) != Symbol()) continue;
+            
+            isSync = his.Orders[j].m_cmd == Reverse(alien.Orders[i].m_cmd); if (isSync)   break;
+         }
+         if (!isSync)   return false;
+      }
+      
+      for(int i = 0; i < ArraySize(his.Orders); i++)
+      {
+         if (his.Orders[i].m_ticket <= 0)  continue;
+         if (his.Orders[i].m_magic != m_dHunterSetting.m_tradeSetting.m_magic)   continue;
+         if (CharArrayToString(his.Orders[i].m_symbol) != Symbol()) continue;
+         
+         bool isSync = false;
+         for (int j = 0; j < ArraySize(alien.Orders); j++)
+         {
+            if (alien.Orders[i].m_ticket <= 0)  continue;
+            if (alien.Orders[i].m_magic != m_dHunterSetting.m_tradeSetting.m_magic)   continue;
+            if (CharArrayToString(alien.Orders[i].m_symbol) != Symbol()) continue;
+            
+            isSync = alien.Orders[j].m_cmd == Reverse(his.Orders[i].m_cmd); if (isSync)   break;
+         }
+         if (!isSync)   return false;
+      }
+      
+      return true;
+   }
+   
    void Synchronization(SData& his, SData& alien)
    {
       if (ExpertTimeOut(alien) || !TradeAllowed(his, alien))  return;
@@ -448,8 +501,16 @@ private:
       double spreadAverageAlien = ((alien.MQLTick.ask - alien.MQLTick.bid) + (alien.MQLTickBefore.ask - alien.MQLTickBefore.bid)) / 2;
       
       string orders = his.OrdersToString();
+      string ordersHistory = his.OrdersHistoryToString();
       
       double sum = OrdersSum(his, alien);
+      double sumHistory = OrdersHistorySum(his, alien);
+      
+      bool hisMaster = false, alienMaster = false;
+         
+      bool sync = isSync(his, alien);
+      if (!sync){ hisMaster = isMaster(his, alien); alienMaster = hisMaster ? false : true; }
+      else      { hisMaster = true; alienMaster = true; }
       
       string text = StringConcatenate(
          company, " : ", login, "\n",
@@ -463,18 +524,20 @@ private:
          "  ask before         ", DoubleToString(alien.MQLTickBefore.ask, digits), "    |    ", DoubleToString(his.MQLTickBefore.ask, digits), "\n",
          "  bid before          ", DoubleToString(alien.MQLTickBefore.bid, digits), "    |    ", DoubleToString(his.MQLTickBefore.bid, digits), "\n"
          "-------------------------------------------------------------------", "\n");
-       return text + StringConcatenate(
+         text += StringConcatenate(
          "  TimeOut           ", DoubleToString(alien.TimeOutQuote * 0.000001, 2), " sec.     |    ", DoubleToString(his.TimeOutQuote * 0.000001, 2), " sec.\n",
          "  LastUpdate        ", TimeToString(alien.LastUpdateExpert, TIME_MINUTES|TIME_SECONDS), "    |    ", TimeToString(his.LastUpdateExpert, TIME_MINUTES|TIME_SECONDS), "\n",
          "  Spread avg        ", DoubleToString(spreadAverageAlien, digits), "    |     ", DoubleToString(spreadAverage, digits), "    \n",
          "  TradeAllowed      ", alien.isTradeAllowed, "        |      ", his.isTradeAllowed, "          \n",
          "  Master                ", alien.Master, "       |      ", his.Master, "          \n",
+         "  LastTransaction   ", TimeToString(alien.LastTimeTransaction, TIME_MINUTES|TIME_SECONDS), "   |   ", TimeToString(his.LastTimeTransaction, TIME_MINUTES|TIME_SECONDS), "          \n",
+         "  CalcutateMaster   ", alienMaster, "        |    ", hisMaster, "        \n",
          "-------------------------------------------------------------------", "\n",
          "  Buy:                " , DoubleToString(NormalizeDouble(spreadGeneral, digits) > 0 ? pointBuy / spreadGeneral : 0,  2), " sp.    |   ", DoubleToString(pointBuy,  digits), " pt.", "\n",
          "  Sell:                 ", DoubleToString(NormalizeDouble(spreadGeneral, digits) > 0 ? pointSell / spreadGeneral : 0, 2), " sp.    |   ", DoubleToString(pointSell, digits), " pt.", "\n",
-         //"     Stop quotes: ", string(status), "\n",
-         "-------------------------------------------------------------------", "\n", orders, "\n", "-------------------------------------------------------------------", "\n",
-         "  Orders sum        ", DoubleToString(sum, digits), " pt.\n", "-------------------------------------------------------------------", "\n"
+         "\n");
+         return text + StringConcatenate("- Open Orders ---- ", DoubleToString(sum, 2), " ----------------------------------", "\n", orders, "\n", "-------------------------------------------------------------------", "\n",
+         "- History Orders -- ", DoubleToString(sumHistory, 2), " ------------------------------", "\n", ordersHistory, "\n", "-------------------------------------------------------------------", "\n"
       );
    }
    
@@ -487,11 +550,35 @@ private:
          if (orders[i].m_ticket <= 0)  continue;
          if (orders[i].m_magic == magic && magic != -1) continue;
          
-         switch(orders[i].m_cmd)
+         sum += (orders[i].m_profit + orders[i].m_swap + orders[i].m_commission);
+         
+         /*switch(orders[i].m_cmd)
          {
             case OP_BUY: sum += orders[i].m_closePrice - orders[i].m_price; break;
             case OP_SELL:sum += orders[i].m_price - orders[i].m_closePrice; break;
          }
+         */
+      }
+      
+      return sum;
+   }
+   
+   double OrdersHistorySum(SData &his, SData &alien, int magic = -1)
+   {
+      double sum = 0;
+      MQLOrder orders[]; ArrayCopy(orders, his.OrdersHistory); ArrayCopy(orders, alien.OrdersHistory, ArraySize(his.OrdersHistory));
+      for(int i = 0; i < ArraySize(orders); i++)
+      {
+         if (orders[i].m_ticket <= 0)  continue;
+         if (orders[i].m_magic == magic && magic != -1) continue;
+         
+         sum += (orders[i].m_profit + orders[i].m_swap + orders[i].m_commission);
+         /*switch(orders[i].m_cmd)
+         {
+            case OP_BUY: sum += orders[i].m_closePrice - orders[i].m_price; break;
+            case OP_SELL:sum += orders[i].m_price - orders[i].m_closePrice; break;
+         }
+         */
       }
       
       return sum;

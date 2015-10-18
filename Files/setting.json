@@ -7,7 +7,7 @@
       "UTC": 1,
       "Prefix": "Local",
       "Updater": true,
-      "Master": true,
+      "Master": false,
       "Managers": {
         "Amir": {
           "Enabler": false
