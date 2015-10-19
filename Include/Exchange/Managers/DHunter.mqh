@@ -57,9 +57,10 @@ protected:
       return (his.isTradeAllowed && alien.isTradeAllowed);
    }
    
-   bool SignalAllowed(ulong timeOutQuote, double minTimeBarrierInMilliSeconds)
+   bool SignalAllowed(ulong timeOutQuote, double minTimeBarrierInMilliSeconds, double maxTimeBarrierInMilliSeconds)
    {
-      return NormalizeDouble(timeOutQuote / 1000, 2) < NormalizeDouble(minTimeBarrierInMilliSeconds, 2);
+      return NormalizeDouble(timeOutQuote / 1000, 2) >= NormalizeDouble(minTimeBarrierInMilliSeconds, 2)  &&
+             (NormalizeDouble(timeOutQuote / 1000, 2) <= NormalizeDouble(maxTimeBarrierInMilliSeconds, 2) || NormalizeDouble(maxTimeBarrierInMilliSeconds, 2) != 0);
    }
    
    bool isMaster(SData& his, SData& alien)
@@ -96,7 +97,7 @@ protected:
       
       ulong time = GetMicrosecondCount();
       
-      if (SignalClose(deviationBuy, deviationSell, spreadBuy, spreadSell, typeOrder) && SignalAllowed(his.TimeOutQuote, m_dHunterSetting.m_signalClose.m_minTimeBarrierInMilliSeconds))
+      if (SignalClose(deviationBuy, deviationSell, spreadBuy, spreadSell, typeOrder) && SignalAllowed(his.TimeOutQuote, m_dHunterSetting.m_signalClose.m_minTimeBarrierInMilliSeconds, m_dHunterSetting.m_signalClose.m_maxTimeBarrierInMilliSeconds))
       {
          Print(__FUNCTION__, ": Сигнал: Закрыть позицию. Расхождение Buy: ", DoubleToString(deviationBuy, 5), ", Расхождение Sell: ", DoubleToString(deviationSell, 5), ", Спред: ", DoubleToString(spread, 5));
          Print(__FUNCTION__, ": BID = ", his.MQLTick.bid, ", BID alien = ", alien.MQLTick.bid);
@@ -106,7 +107,7 @@ protected:
       
       ulong timeExecution = GetMicrosecondCount() - time; if ((timeExecution / 1000) > 300)   return;
       
-      if (SignalOpen(deviationBuy, deviationSell, spreadBuy, spreadSell, typeOrder) && SignalAllowed(his.TimeOutQuote, m_dHunterSetting.m_signalOpen.m_minTimeBarrierInMilliSeconds))
+      if (SignalOpen(deviationBuy, deviationSell, spreadBuy, spreadSell, typeOrder) && SignalAllowed(his.TimeOutQuote, m_dHunterSetting.m_signalOpen.m_minTimeBarrierInMilliSeconds, m_dHunterSetting.m_signalOpen.m_maxTimeBarrierInMilliSeconds))
       {
          Print(__FUNCTION__, ": Сигнал: Открыть позицию. Расхождение Buy: ", DoubleToString(deviationBuy, 5), ", Расхождение Sell: ", DoubleToString(deviationSell, 5), ", Спред: ", DoubleToString(spread, 5));
          Print(__FUNCTION__, ": BID = ", his.MQLTick.bid, ", BID alien = ", alien.MQLTick.bid);

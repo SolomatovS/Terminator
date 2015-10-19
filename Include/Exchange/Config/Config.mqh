@@ -359,6 +359,11 @@ private:
                         {
                            Print(__FUNCTION__, ": not parse 'Defaults:Monitor:Managers:DHunter:Signal:Open:MinTimeBarrierInMilliSeconds'. stop parsing.");
                         }
+                        result = open.getDouble("MaxTimeBarrierInMilliSeconds", setting.m_signalOpen.m_maxTimeBarrierInMilliSeconds);
+                        if (!result)
+                        {
+                           Print(__FUNCTION__, ": not parse 'Defaults:Monitor:Managers:DHunter:Signal:Open:MaxTimeBarrierInMilliSeconds'. stop parsing.");
+                        }
                      }
                      if (CheckPointer(open) == POINTER_DYNAMIC)   delete open;
                      
@@ -379,6 +384,11 @@ private:
                         if (!result)
                         {
                            Print(__FUNCTION__, ": not parse 'Defaults:Monitor:Managers:DHunter:Signal:Close:MinTimeBarrierInMilliSeconds'. stop parsing.");
+                        }
+                        result = close.getDouble("MaxTimeBarrierInMilliSeconds", setting.m_signalClose.m_minTimeBarrierInMilliSeconds);
+                        if (!result)
+                        {
+                           Print(__FUNCTION__, ": not parse 'Defaults:Monitor:Managers:DHunter:Signal:Close:MaxTimeBarrierInMilliSeconds'. stop parsing.");
                         }
                      }
                      if (CheckPointer(close) == POINTER_DYNAMIC)   delete close;
