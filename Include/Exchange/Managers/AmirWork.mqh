@@ -21,7 +21,7 @@ protected:
    {
       // ArraySize(datas) - означает массив количества торговых териналов, на которых работает советник 
       // index - это свой терминал, его он не будет проверять
-      double dPendingProfit[30]; // создали массив с размером кооличества брокеров
+      double dPendingProfit[30]; // создали массив с размером количества брокеров
       string sTextToComment = "Последняя успешная синхронизация: " + TimeToString(TimeLocal(),TIME_DATE|TIME_SECONDS) + "\n";
       for(int i = 0; i < ArraySize(datas); i++) // перебираем терминалы, записанные в массив и сравниваем цены
       {

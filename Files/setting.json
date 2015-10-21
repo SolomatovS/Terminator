@@ -44,7 +44,7 @@
   },
   "Monitors": [
   {
-    "SymbolTerminal": "EURUSD",
+    "SymbolTerminal": "EURUSD.1",
     "SymbolMemory":   "EURUSD",
     "Managers": {
       "DHunter": {
