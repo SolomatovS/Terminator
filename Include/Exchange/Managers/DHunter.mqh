@@ -296,10 +296,34 @@ protected:
       }
       else ActionOpenOrder(his, alien, typeOrder); return;
    }
+   bool CheckRequestLongExecution(SData& his, int typeOrder)
+   {
+      MqlTick tick;
+      SymbolInfoTick(CharArrayToString(his.TSymbol), tick);
+      if (typeOrder == OP_BUY)
+      {
+         if (tick.ask > his.MQLTick.ask)
+         {
+            Print(__FUNCTION__, ": Цена изменилась в худшую сторону. не открываем ордер. было: ", DoubleToString(his.MQLTick.ask, 5), ", стало: ", DoubleToString(tick.ask, 5));
+            return false;
+         }
+      }
+      if (typeOrder == OP_SELL)
+      {
+         if (tick.bid < his.MQLTick.bid)
+         {
+            Print(__FUNCTION__, ": Цена изменилась в худшую сторону. не открываем ордер. было: ", DoubleToString(his.MQLTick.bid, 5), ", стало: ", DoubleToString(tick.bid, 5));
+            return false;
+         }
+      }
+      return true;
+   }
    void ActionOpenOrder(SData& his, SData& alien, int typeOrder)
    {
       MQLRequestOpen request; request.Init();
-      request.m_cmd = typeOrder;
+      if (!CheckRequestLongExecution(his, typeOrder))  return;
+      
+      request.m_cmd = typeOrder; 
       FillRequest(request, his, alien);
       if (request.m_cmd == -1)
       {
@@ -338,6 +362,9 @@ protected:
             if (OrderCloseTime() > 0 || !OrderUnic(Symbol(), m_dHunterSetting.m_tradeSetting.m_magic, typeOrder))   continue;
             
             MQLRequestClose request; request.Init();
+            
+            if (!CheckRequestLongExecution(his, typeOrder))  return;
+            
             FillRequest(request, OrderTicket(), his);
             MQLRequestClose try[];
             
@@ -382,7 +409,7 @@ private:
       //request.m_cmd = SignalDetection(his, alien);
       ArrayCopy(request.m_symbol, his.TSymbol);
       FillRequestVolume(request.m_volume);
-      FillRequestPrice(request.m_tick, request.m_cmd, request.m_price);
+      FillRequestPrice(his.MQLTick, request.m_cmd, request.m_price);
       request.m_magic = m_dHunterSetting.m_tradeSetting.m_magic;
       request.m_slippage = 0;
    }
@@ -393,7 +420,7 @@ private:
       {
          request.m_ticket = ticket;
          request.m_lots = OrderLots();
-         FillRequestPrice(request.m_tick, OrderType(), request.m_price);
+         FillRequestPrice(his.MQLTick, OrderType(), request.m_price);
          request.m_slippage = 0;
       }
    }
