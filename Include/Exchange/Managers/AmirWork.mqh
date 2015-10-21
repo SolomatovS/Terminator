@@ -35,13 +35,21 @@ protected:
    
    void TradeStopQuotes(SData& his, SData& alien)
    {
-      if((his.MQLTick.bid - alien.MQLTick.ask)/Point >= 35) // зареджка вниз, ситуация "BUY[0]-SELL[1]"
+      // Три пункта, которые необходимо реализовать:
+      // 1) открытие на задержке котировки (ранее было закрытие)
+      // 2) фильтрация входа в рынок по 3-ем котировкам в задержке (исключать моменты резких прорыров цены в область задержки)
+      // 3) фильтрация сигналов возникащих при перезапуске торговой платформы ("ошибка пустых цен" я ее называю)
+      
+      
+      
+      // старый код, будем кодить новую логику!
+      /*if((his.MQLTick.bid - alien.MQLTick.ask)/Point >= 35) // зареджка вниз, ситуация "BUY[0]-SELL[1]"
       Alert(CharArrayToString(alien.Terminal.Company), " - ", TimeToString(TimeLocal(),TIME_DATE|TIME_SECONDS), ", зареджка вниз ", DoubleToString((his.MQLTick.bid - alien.MQLTick.ask)/Point, 0),
             " пунктов, ситуация BUY[", DoubleToString(his.MQLTick.bid,5),"]-SELL[", DoubleToString(alien.MQLTick.ask,5),"]");
       if((alien.MQLTick.bid - his.MQLTick.ask)/Point >= 35) // зареджка вверх, ситуация "SELL[0]-BUY[1]"
       Alert(CharArrayToString(alien.Terminal.Company), " - ", TimeToString(TimeLocal(),TIME_DATE|TIME_SECONDS), ", зареджка вверх ", DoubleToString((alien.MQLTick.bid - his.MQLTick.ask)/Point, 0),
             " пунктов, ситуация Sell[", DoubleToString(alien.MQLTick.bid,5),"]-BUY[", DoubleToString(his.MQLTick.ask,5),"]");
-      //Comment("Последняя успешная синхронизация: ", TimeToString(TimeLocal(),TIME_DATE|TIME_SECONDS));
+      //Comment("Последняя успешная синхронизация: ", TimeToString(TimeLocal(),TIME_DATE|TIME_SECONDS));*/
    }
    string GetText(SData& his, SData& alien)
    {
