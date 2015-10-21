@@ -186,7 +186,7 @@ protected:
          if (alien.Orders[i].m_magic != m_dHunterSetting.m_tradeSetting.m_magic)   continue;
          if (CharArrayToString(alien.Orders[i].m_symbol) != Symbol()) continue;
          
-         SynchronizationOpenOrder(alien.Orders[i]);
+         SynchronizationOpenOrder(his, alien.Orders[i]);
       }
       
       // ѕотом закрываем те ордера, которых нет в терминале master
@@ -197,11 +197,11 @@ protected:
          {
             if (!OrderUnic(Symbol(), m_dHunterSetting.m_tradeSetting.m_magic))   continue;
             
-            SynchronizationCloseOrder(OrderTicket(), alien);
+            SynchronizationCloseOrder(OrderTicket(), his, alien);
          }
       }
    }
-   void SynchronizationOpenOrder(MQLOrder& orderForSynchronization)
+   void SynchronizationOpenOrder(SData& his, MQLOrder& orderForSynchronization)
    {
       bool orderOpened = false;
       for (int i = 0; i < OrdersTotal(); i++)
@@ -217,7 +217,8 @@ protected:
          Print(__FUNCTION__, ": ќбнаружен не синхронизированный ордер, открываем его.");
          MQLRequestOpen request; request.Init(orderForSynchronization);
          request.m_cmd = Reverse(orderForSynchronization.m_cmd);
-         request.m_price = 0;
+         FillRequestPrice(his.MQLTick, request.m_cmd, request.m_price);
+         //request.m_price = 0;
          request.m_stoploss = orderForSynchronization.m_takeprofit; request.m_takeprofit = orderForSynchronization.m_stoploss;
          
          MQLRequestOpen try[];
@@ -242,7 +243,7 @@ protected:
          }
       }
    }
-   void SynchronizationCloseOrder(int ticket, SData& alien)
+   void SynchronizationCloseOrder(int ticket, SData& his, SData& alien)
    {
       if (!OrderSelect(ticket, SELECT_BY_TICKET))   return;
       
@@ -262,7 +263,9 @@ protected:
       {
          MQLRequestClose request; request.Init();
          FillRequest(request, OrderTicket(), alien);
-         request.m_price = 0;
+         FillRequestPrice(his.MQLTick, Reverse(OrderType()), request.m_price);
+         
+         //request.m_price = 0;
          MQLRequestClose try[];
          bool result = m_trader.CloseOrDeleteOrder(
                                        request,
