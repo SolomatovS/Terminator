@@ -140,14 +140,14 @@ protected:
       {
          if (alien.Orders[i].m_ticket <= 0)  continue;
          if (alien.Orders[i].m_magic != m_dHunterSetting.m_tradeSetting.m_magic)   continue;
-         if (CharArrayToString(alien.Orders[i].m_symbol) != Symbol()) continue;
+         //if (CharArrayToString(alien.Orders[i].m_symbol) != Symbol()) continue;
          
          bool isSync = false;
          for (int j = 0; j < ArraySize(his.Orders); j++)
          {
             if (his.Orders[j].m_ticket <= 0)  continue;
             if (his.Orders[j].m_magic != m_dHunterSetting.m_tradeSetting.m_magic)   continue;
-            if (CharArrayToString(his.Orders[j].m_symbol) != Symbol()) continue;
+            //if (CharArrayToString(his.Orders[j].m_symbol) != Symbol()) continue;
             
             isSync = his.Orders[j].m_cmd == Reverse(alien.Orders[i].m_cmd); if (isSync)   break;
          }
@@ -158,14 +158,14 @@ protected:
       {
          if (his.Orders[i].m_ticket <= 0)  continue;
          if (his.Orders[i].m_magic != m_dHunterSetting.m_tradeSetting.m_magic)   continue;
-         if (CharArrayToString(his.Orders[i].m_symbol) != Symbol()) continue;
+         //if (CharArrayToString(his.Orders[i].m_symbol) != Symbol()) continue;
          
          bool isSync = false;
          for (int j = 0; j < ArraySize(alien.Orders); j++)
          {
             if (alien.Orders[j].m_ticket <= 0)  continue;
             if (alien.Orders[j].m_magic != m_dHunterSetting.m_tradeSetting.m_magic)   continue;
-            if (CharArrayToString(alien.Orders[j].m_symbol) != Symbol()) continue;
+            //if (CharArrayToString(alien.Orders[j].m_symbol) != Symbol()) continue;
             
             isSync = alien.Orders[j].m_cmd == Reverse(his.Orders[i].m_cmd); if (isSync)   break;
          }
@@ -184,7 +184,7 @@ protected:
       {
          if (alien.Orders[i].m_ticket <= 0)  continue;
          if (alien.Orders[i].m_magic != m_dHunterSetting.m_tradeSetting.m_magic)   continue;
-         if (CharArrayToString(alien.Orders[i].m_symbol) != Symbol()) continue;
+         //if (CharArrayToString(alien.Orders[i].m_symbol) != Symbol()) continue;
          
          SynchronizationOpenOrder(his, alien.Orders[i]);
       }
@@ -254,7 +254,7 @@ protected:
          if (alien.Orders[i].m_ticket <= 0)  continue;
          if (alien.Orders[i].m_magic != m_dHunterSetting.m_tradeSetting.m_magic)   continue;
          if (alien.Orders[i].m_cmd != Reverse(OrderType())) continue;
-         if (CharArrayToString(alien.Orders[i].m_symbol) != OrderSymbol()) continue;
+         //if (CharArrayToString(alien.Orders[i].m_symbol) != OrderSymbol()) continue;
          
          orderOpened = true; break;
       }
