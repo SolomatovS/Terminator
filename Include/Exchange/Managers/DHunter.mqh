@@ -216,6 +216,7 @@ protected:
       {
          Print(__FUNCTION__, ": Обнаружен не синхронизированный ордер, открываем его.");
          MQLRequestOpen request; request.Init(orderForSynchronization);
+         StringToCharArray(Symbol(), request.m_symbol);
          request.m_cmd = Reverse(orderForSynchronization.m_cmd);
          FillRequestPrice(his.MQLTick, request.m_cmd, request.m_price);
          //request.m_price = 0;
