@@ -10,10 +10,10 @@
       "Master": true,
       "Managers": {
         "Amir": {
-          "Enabler": false
+          "Enabler": true
         },
         "DHunter": {
-          "Enabler": true,
+          "Enabler": false,
           "Logger": true,
           "ExpertTimeOut": 1,
           "MinRestrictionPoint": 0.00030,
