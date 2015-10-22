@@ -22,6 +22,11 @@ public:
    {
       if(SymbolSelect(m_expert.m_monitor.m_symbolTerminal, true))
       {
+         datetime current = TimeCurrent(), gmt = TimeGMT(); double differ = current - gmt, offset = differ / 3600;
+         if (m_expert.m_monitor.m_UTC != NormalizeDouble(offset, 0))
+         {
+            Alert("Возможно неверно указано смещение относительно UTC. Проверьте настройки.\nСмещение вычесленное в терминале: ", offset, "\nСмещение в настройках: ", m_expert.m_monitor.m_UTC);
+         }
          MonitorConfigurator* monitorConfigurator = new MonitorConfigurator(m_expert.m_monitor);
          if (CheckPointer(monitor) == POINTER_DYNAMIC) { delete monitor; monitor = NULL; }
          monitor = new Monitor(monitorConfigurator);

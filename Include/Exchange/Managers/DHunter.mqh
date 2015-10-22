@@ -34,7 +34,18 @@ protected:
          
          bool sync = isSync(datas[index], datas[i]);
          if (!sync)  master = isMaster(datas[index], datas[i]);
-         else        master = true;
+         else
+         {
+            bool openedOrder = OrderIsOpened(Symbol(), m_dHunterSetting.m_tradeSetting.m_magic);
+            if (openedOrder)
+            {
+               master = true;
+            }
+            else
+            {
+               master = datas[i].Master;
+            }
+         }
          
          if (master/*datas[index].Master*/)
          {
@@ -456,7 +467,7 @@ private:
       return (StringCompare(OrderSymbol(), symbol) == 0 && OrderMagicNumber() == magic && (OrderType() == typeOrder || typeOrder == -1));
    }
    
-   bool OrderIsOpened(string symbol, int magic, int typeOrder)
+   bool OrderIsOpened(string symbol, int magic, int typeOrder = -1)
    {
       for(int i = 0; i < OrdersTotal(); i++)
       {
@@ -522,7 +533,7 @@ private:
    {
       string company = CharArrayToString(alien.Terminal.Company);
       int login = alien.Terminal.Login;
-      int digits = SymbolInfoInteger(CharArrayToString(his.TSymbol), SYMBOL_DIGITS);
+      int digits = 5;
       
       double pointBuy  = alien.MQLTick.bid - his.MQLTick.ask;
       double pointSell = his.MQLTick.bid - alien.MQLTick.ask;
@@ -542,7 +553,19 @@ private:
          
       bool sync = isSync(his, alien);
       if (!sync){ hisMaster = isMaster(his, alien); alienMaster = hisMaster ? false : true; }
-      else      { hisMaster = true; alienMaster = true; }
+      else
+      {
+         bool openedOrder = OrderIsOpened(Symbol(), m_dHunterSetting.m_tradeSetting.m_magic);
+         if (openedOrder)
+         {
+            hisMaster = true; alienMaster = true;
+         }
+         else
+         {
+            hisMaster = his.Master; alienMaster = alien.Master;
+         }
+         
+      }
       
       string text = StringConcatenate(
          company, " : ", login, "\n",
