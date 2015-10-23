@@ -4,10 +4,10 @@
     "Monitor": {
       "SymbolMemory": "Default",
       "SymbolTerminal": "Default",
-      "UTC": 0,
+      "UTC": 3,
       "Prefix": "Local",
       "Updater": true,
-      "Master": true,
+      "Master": false,
       "Managers": {
         "Amir": {
           "Enabler": false
@@ -45,14 +45,14 @@
   },
   "Monitors": [
   {
-    "SymbolTerminal": "EURUSD.lmx",
+    "SymbolTerminal": "EURUSD",
     "SymbolMemory":   "EURUSD",
     "Managers": {
       "DHunter": {
         "Signal": {
           "Open": {
             "MinSpreads": 1,
-            "MinPoints": 0.00020
+            "MinPoints": 0.00010
           },
           "Close": {
             "MinSpreads": 1,
@@ -63,14 +63,14 @@
     }
   },
   {
-    "SymbolTerminal": "GBPUSD.lmx",
+    "SymbolTerminal": "GBPUSD",
     "SymbolMemory":   "GBPUSD",
     "Managers": {
       "DHunter": {
         "Signal": {
           "Open": {
             "MinSpreads": 1,
-            "MinPoints": 0.0002
+            "MinPoints": 0.00010
           },
           "Close": {
             "MinSpreads": 1,
@@ -81,14 +81,14 @@
     }
   },
   {
-    "SymbolTerminal": "USDJPY.lmx",
+    "SymbolTerminal": "USDJPY",
     "SymbolMemory":   "USDJPY",
     "Managers": {
       "DHunter": {
         "Signal": {
           "Open": {
             "MinSpreads": 1,
-            "MinPoints": 0.03
+            "MinPoints": 0.01
           },
           "Close": {
             "MinSpreads": 1,
@@ -99,14 +99,14 @@
     }
   },
   {
-    "SymbolTerminal": "XAUUSD.lmx",
+    "SymbolTerminal": "XAUUSD",
     "SymbolMemory":   "XAUUSD",
     "Managers": {
       "DHunter": {
         "Signal": {
           "Open": {
             "MinSpreads": 1,
-            "MinPoints": 0.60
+            "MinPoints": 0.30
           },
           "Close": {
             "MinSpreads": 1,
@@ -117,14 +117,14 @@
     }
   },
   {
-    "SymbolTerminal": "AUDUSD.lmx",
+    "SymbolTerminal": "AUDUSD",
     "SymbolMemory":   "AUDUSD",
     "Managers": {
       "DHunter": {
         "Signal": {
           "Open": {
             "MinSpreads": 1,
-            "MinPoints": 0.0003
+            "MinPoints": 0.0001
           },
           "Close": {
             "MinSpreads": 1,
@@ -135,14 +135,14 @@
     }
   },
   {
-    "SymbolTerminal": "USDCAD.lmx",
+    "SymbolTerminal": "USDCAD",
     "SymbolMemory":   "USDCAD",
     "Managers": {
       "DHunter": {
         "Signal": {
           "Open": {
             "MinSpreads": 1,
-            "MinPoints": 0.0004
+            "MinPoints": 0.0001
           },
           "Close": {
             "MinSpreads": 1,
@@ -153,14 +153,14 @@
     }
   },
   {
-    "SymbolTerminal": "NZDUSD.lmx",
+    "SymbolTerminal": "NZDUSD",
     "SymbolMemory":   "NZDUSD",
     "Managers": {
       "DHunter": {
         "Signal": {
           "Open": {
             "MinSpreads": 1,
-            "MinPoints": 0.0004
+            "MinPoints": 0.0001
           },
           "Close": {
             "MinSpreads": 1,
@@ -171,14 +171,14 @@
     }
   },
   {
-    "SymbolTerminal": "NZDJPY.lmx",
+    "SymbolTerminal": "NZDJPY",
     "SymbolMemory":   "NZDJPY",
     "Managers": {
       "DHunter": {
         "Signal": {
           "Open": {
             "MinSpreads": 1,
-            "MinPoints": 0.0007
+            "MinPoints": 0.0001
           },
           "Close": {
             "MinSpreads": 1,
@@ -189,14 +189,14 @@
     }
   },
   {
-    "SymbolTerminal": "EURNZD.lmx",
+    "SymbolTerminal": "EURNZD",
     "SymbolMemory":   "EURNZD",
     "Managers": {
       "DHunter": {
         "Signal": {
           "Open": {
             "MinSpreads": 1,
-            "MinPoints": 0.00100
+            "MinPoints": 0.0001
           },
           "Close": {
             "MinSpreads": 1,
@@ -207,14 +207,14 @@
     }
   },
   {
-    "SymbolTerminal": "EURJPY.lmx",
+    "SymbolTerminal": "EURJPY",
     "SymbolMemory":   "EURJPY",
     "Managers": {
       "DHunter": {
         "Signal": {
           "Open": {
             "MinSpreads": 1,
-            "MinPoints": 0.00050
+            "MinPoints": 0.00030
           },
           "Close": {
             "MinSpreads": 1,
@@ -225,14 +225,14 @@
     }
   },
   {
-    "SymbolTerminal": "XAGUSD.lmx",
+    "SymbolTerminal": "XAGUSD",
     "SymbolMemory":   "XAGUSD",
     "Managers": {
       "DHunter": {
         "Signal": {
           "Open": {
             "MinSpreads": 1,
-            "MinPoints": 0.06
+            "MinPoints": 0.02
           },
           "Close": {
             "MinSpreads": 1,
@@ -243,14 +243,14 @@
     }
   },
   {
-    "SymbolTerminal": "USDCNH.lmx",
+    "SymbolTerminal": "USDCNH",
     "SymbolMemory":   "USDCNH",
     "Managers": {
       "DHunter": {
         "Signal": {
           "Open": {
             "MinSpreads": 1,
-            "MinPoints": 0.0040
+            "MinPoints": 0.0010
           },
           "Close": {
             "MinSpreads": 1,

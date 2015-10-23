@@ -35,7 +35,7 @@ protected:
          switch (m_dHunterSetting.m_type)
          {
             case m_delayer:
-               if (!datas[index].Master) SignalDelay(datas[index], datas[i]);
+               if (!datas[index].Master && datas[i].Master) SignalDelay(datas[index], datas[i]);
             break;
             case m_deviator:
                sync = isSync(datas[index], datas[i]);
