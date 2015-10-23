@@ -4,10 +4,10 @@
     "Monitor": {
       "SymbolMemory": "Default",
       "SymbolTerminal": "Default",
-      "UTC": 1,
+      "UTC": 0,
       "Prefix": "Local",
       "Updater": true,
-      "Master": false,
+      "Master": true,
       "Managers": {
         "Amir": {
           "Enabler": false
@@ -15,8 +15,9 @@
         "DHunter": {
           "Enabler": true,
           "Logger": true,
+          "Type": "Delayer",
           "ExpertTimeOut": 1,
-          "MinRestrictionPoint": 0.00030,
+          "MinRestrictionPoint": 0.0000,
           "TradeSetting": {
             "Lots": 1,
             "Magic": 0,
@@ -28,14 +29,14 @@
           },
           "Signal": {
             "Open": {
-              "MinSpreads": 2,
-              "MinPoints": 0.0003,
-              "MinTimeBarrierInMilliSeconds": 500
+              "MinSpreads": 1,
+              "MinPoints": 0.0001,
+              "MinTimeBarrierInMilliSeconds": 0
             },
             "Close": {
               "MinSpreads": 1,
               "MinPoints": 0.0001,
-              "MinTimeBarrierInMilliSeconds": 500
+              "MinTimeBarrierInMilliSeconds": 0
             }
           }
         }
@@ -44,53 +45,53 @@
   },
   "Monitors": [
   {
-    "SymbolTerminal": "EURUSD",
+    "SymbolTerminal": "EURUSD.lmx",
     "SymbolMemory":   "EURUSD",
     "Managers": {
       "DHunter": {
         "Signal": {
           "Open": {
-            "MinSpreads": 2,
-            "MinPoints": 0.0003
+            "MinSpreads": 1,
+            "MinPoints": 0.00020
           },
           "Close": {
             "MinSpreads": 1,
-            "MinPoints": 0.0001
+            "MinPoints": 0.00015
           }
         }
       }
     }
   },
   {
-    "SymbolTerminal": "GBPUSD",
+    "SymbolTerminal": "GBPUSD.lmx",
     "SymbolMemory":   "GBPUSD",
     "Managers": {
       "DHunter": {
         "Signal": {
           "Open": {
-            "MinSpreads": 2,
-            "MinPoints": 0.0004
+            "MinSpreads": 1,
+            "MinPoints": 0.0002
           },
           "Close": {
             "MinSpreads": 1,
-            "MinPoints": 0.0001
+            "MinPoints": 0.0002
           }
         }
       }
     }
   },
   {
-    "SymbolTerminal": "USDJPY",
+    "SymbolTerminal": "USDJPY.lmx",
     "SymbolMemory":   "USDJPY",
     "Managers": {
       "DHunter": {
         "Signal": {
           "Open": {
-            "MinSpreads": 2,
+            "MinSpreads": 1,
             "MinPoints": 0.03
           },
           "Close": {
-            "MinSpreads": 2,
+            "MinSpreads": 1,
             "MinPoints": 0.02
           }
         }
@@ -98,54 +99,162 @@
     }
   },
   {
-    "SymbolTerminal": "XAUUSD",
+    "SymbolTerminal": "XAUUSD.lmx",
     "SymbolMemory":   "XAUUSD",
     "Managers": {
       "DHunter": {
         "Signal": {
           "Open": {
-            "MinSpreads": 2,
-            "MinPoints": 1.50
+            "MinSpreads": 1,
+            "MinPoints": 0.60
           },
           "Close": {
             "MinSpreads": 1,
-            "MinPoints": 1.0
+            "MinPoints": 0.50
           }
         }
       }
     }
   },
   {
-    "SymbolTerminal": "AUDUSD",
+    "SymbolTerminal": "AUDUSD.lmx",
     "SymbolMemory":   "AUDUSD",
     "Managers": {
       "DHunter": {
         "Signal": {
           "Open": {
-            "MinSpreads": 2,
+            "MinSpreads": 1,
             "MinPoints": 0.0003
           },
           "Close": {
             "MinSpreads": 1,
-            "MinPoints": 0.0001
+            "MinPoints": 0.0002
           }
         }
       }
     }
   },
   {
-    "SymbolTerminal": "USDCAD",
+    "SymbolTerminal": "USDCAD.lmx",
     "SymbolMemory":   "USDCAD",
     "Managers": {
       "DHunter": {
         "Signal": {
           "Open": {
-            "MinSpreads": 2,
-            "MinPoints": 0.0009
+            "MinSpreads": 1,
+            "MinPoints": 0.0004
           },
           "Close": {
             "MinSpreads": 1,
-            "MinPoints": 0.0005
+            "MinPoints": 0.0002
+          }
+        }
+      }
+    }
+  },
+  {
+    "SymbolTerminal": "NZDUSD.lmx",
+    "SymbolMemory":   "NZDUSD",
+    "Managers": {
+      "DHunter": {
+        "Signal": {
+          "Open": {
+            "MinSpreads": 1,
+            "MinPoints": 0.0004
+          },
+          "Close": {
+            "MinSpreads": 1,
+            "MinPoints": 0.0002
+          }
+        }
+      }
+    }
+  },
+  {
+    "SymbolTerminal": "NZDJPY.lmx",
+    "SymbolMemory":   "NZDJPY",
+    "Managers": {
+      "DHunter": {
+        "Signal": {
+          "Open": {
+            "MinSpreads": 1,
+            "MinPoints": 0.0007
+          },
+          "Close": {
+            "MinSpreads": 1,
+            "MinPoints": 0.0002
+          }
+        }
+      }
+    }
+  },
+  {
+    "SymbolTerminal": "EURNZD.lmx",
+    "SymbolMemory":   "EURNZD",
+    "Managers": {
+      "DHunter": {
+        "Signal": {
+          "Open": {
+            "MinSpreads": 1,
+            "MinPoints": 0.00100
+          },
+          "Close": {
+            "MinSpreads": 1,
+            "MinPoints": 0.00020
+          }
+        }
+      }
+    }
+  },
+  {
+    "SymbolTerminal": "EURJPY.lmx",
+    "SymbolMemory":   "EURJPY",
+    "Managers": {
+      "DHunter": {
+        "Signal": {
+          "Open": {
+            "MinSpreads": 1,
+            "MinPoints": 0.00050
+          },
+          "Close": {
+            "MinSpreads": 1,
+            "MinPoints": 0.00020
+          }
+        }
+      }
+    }
+  },
+  {
+    "SymbolTerminal": "XAGUSD.lmx",
+    "SymbolMemory":   "XAGUSD",
+    "Managers": {
+      "DHunter": {
+        "Signal": {
+          "Open": {
+            "MinSpreads": 1,
+            "MinPoints": 0.06
+          },
+          "Close": {
+            "MinSpreads": 1,
+            "MinPoints": 0.01
+          }
+        }
+      }
+    }
+  },
+  {
+    "SymbolTerminal": "USDCNH.lmx",
+    "SymbolMemory":   "USDCNH",
+    "Managers": {
+      "DHunter": {
+        "Signal": {
+          "Open": {
+            "MinSpreads": 1,
+            "MinPoints": 0.0040
+          },
+          "Close": {
+            "MinSpreads": 1,
+            "MinPoints": 0.0010
           }
         }
       }

@@ -334,8 +334,8 @@ private:
                   }
                   else
                   {
-                     if (StringCompare(type, "Master", false) == 0) setting.m_type = m_master;
-                     if (StringCompare(type, "Slave", false) == 0) setting.m_type = m_slave;
+                     if (StringCompare(type, "Deviator", false) == 0) setting.m_type = m_deviator;
+                     if (StringCompare(type, "Delayer", false) == 0) setting.m_type = m_delayer;
                   }
                   
                   JSONObject* signal = dHunter.getObject("Signal");

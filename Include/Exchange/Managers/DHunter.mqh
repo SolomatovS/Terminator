@@ -30,30 +30,38 @@ protected:
       {
          if (i == index) continue;
          
-         bool master = false;
+         bool master = false; bool sync;
          
-         bool sync = isSync(datas[index], datas[i]);
-         if (!sync)  master = isMaster(datas[index], datas[i]);
-         else
+         switch (m_dHunterSetting.m_type)
          {
-            bool openedOrder = OrderIsOpened(Symbol(), m_dHunterSetting.m_tradeSetting.m_magic);
-            if (openedOrder)
-            {
-               master = true;
-            }
-            else
-            {
-               master = datas[i].Master;
-            }
-         }
-         
-         if (master/*datas[index].Master*/)
-         {
-            SignalProcessing(datas[index], datas[i]);
-         }
-         else
-         {
-            Synchronization(datas[index], datas[i]);
+            case m_delayer:
+               if (!datas[index].Master) SignalDelay(datas[index], datas[i]);
+            break;
+            case m_deviator:
+               sync = isSync(datas[index], datas[i]);
+               if (!sync)  master = isMaster(datas[index], datas[i]);
+               else
+               {
+                  bool openedOrder = OrderIsOpened(Symbol(), m_dHunterSetting.m_tradeSetting.m_magic);
+                  if (openedOrder)
+                  {
+                     master = true;
+                  }
+                  else
+                  {
+                     master = datas[i].Master;
+                  }
+               }
+               
+               if (master/*datas[index].Master*/)
+               {
+                  SignalProcessing(datas[index], datas[i]);
+               }
+               else
+               {
+                  Synchronization(datas[index], datas[i]);
+               }
+            break;
          }
       }
    }
@@ -78,7 +86,54 @@ protected:
    {
       return his.LastTimeTransaction > alien.LastTimeTransaction;
    }
+   
+   void CalculateTick(SData& his, SData& alien, double& calculatedAsk, double& clculatedBid)
+   {
+      double spread = NormalizeDouble(his.MQLTick.ask - his.MQLTick.bid, 5);
+      //double spreadBefore = NormalizeDouble(his.MQLTickBefore.ask - his.MQLTickBefore.bid, 5);
+      //double spread = (spreadCurrent + spreadBefore) / 2;
+      calculatedAsk = (alien.MQLTick.ask + alien.MQLTick.bid) / 2 + spread / 2;
+      clculatedBid = calculatedAsk - spread;
+   }
+   
+   void SignalDelay(SData& his, SData& alien)
+   {
+      if (!m_dHunterSetting.m_enabler) return;
       
+      if (ExpertTimeOut(alien) || !TradeAllowed(his, alien))  return;
+      
+      double calculatedBid, calculatedAsk;
+      CalculateTick(his, alien, calculatedAsk, calculatedBid);
+      
+      double deviationBuy   = calculatedBid - his.MQLTick.ask;
+      double deviationSell  = his.MQLTick.bid - calculatedAsk;
+      
+      bool openBuy = (deviationBuy - m_dHunterSetting.m_signalOpen.m_minPoints) > 0;
+      bool openSell= (deviationSell- m_dHunterSetting.m_signalOpen.m_minPoints) > 0;
+      
+      int typeOrder = openBuy ? OP_BUY : openSell ? OP_SELL : -1;
+      
+      if (openBuy || openSell)
+      {
+         Print(__FUNCTION__, ": Сигнал: Открыть позицию. Расхождение Buy: ", DoubleToString(deviationBuy, 5), ", Расхождение Sell: ", DoubleToString(deviationSell, 5));
+         Print(__FUNCTION__, ": BID = ", his.MQLTick.bid, ", BID alien = ", alien.MQLTick.bid);
+         Print(__FUNCTION__, ": ASK = ", his.MQLTick.ask, ", ASK alien = ", alien.MQLTick.ask);
+         ActionSignalOpenOrder(his, alien, typeOrder);
+      }
+      else
+      {
+         bool openedOrderBuy = OrderIsOpened(Symbol(), m_dHunterSetting.m_tradeSetting.m_magic, OP_BUY);
+         bool openedOrderSell= OrderIsOpened(Symbol(), m_dHunterSetting.m_tradeSetting.m_magic, OP_SELL);
+         if (openedOrderBuy || openedOrderSell)
+         {
+            Print(__FUNCTION__, ": Сигнал: Закрыть позицию. Расхождение Buy: ", DoubleToString(deviationBuy, 5), ", Расхождение Sell: ", DoubleToString(deviationSell, 5));
+            Print(__FUNCTION__, ": BID = ", his.MQLTick.bid, ", BID alien = ", alien.MQLTick.bid);
+            Print(__FUNCTION__, ": ASK = ", his.MQLTick.ask, ", ASK alien = ", alien.MQLTick.ask);
+            ActionSignalCloseOrders(his, alien, openedOrderBuy ? OP_BUY : openedOrderSell ? OP_SELL : -1);
+         }
+      }
+   }
+   
    // Check quotes deviation (BID > ASK || ASK < BID)
    void SignalProcessing(SData& his, SData& alien)
    {
@@ -313,8 +368,7 @@ protected:
    }
    bool CheckRequestLongExecution(SData& his, int typeOrder)
    {
-      MqlTick tick;
-      SymbolInfoTick(CharArrayToString(his.TSymbol), tick);
+      MqlTick tick; SymbolInfoTick(CharArrayToString(his.TSymbol), tick);
       if (typeOrder == OP_BUY)
       {
          if (tick.ask > his.MQLTick.ask)
