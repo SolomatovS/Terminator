@@ -579,6 +579,8 @@ private:
       for(int i = 0; i < ArraySize(datas); i++)
       {
          if (i == index) continue;
+         if ((datas[index].Master == datas[i].Master) && m_dHunterSetting.m_type == m_delayer) continue;
+         
          m_log += Log(datas[index], datas[i]);
       }
       Comment(m_log);
