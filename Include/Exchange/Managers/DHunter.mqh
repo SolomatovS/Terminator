@@ -49,7 +49,7 @@ protected:
                   }
                   else
                   {
-                     master = datas[i].Master;
+                     master = datas[index].Master;
                   }
                }
                
