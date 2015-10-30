@@ -37,6 +37,17 @@ protected:
             case m_delayer:
                if (!datas[index].Master && datas[i].Master) SignalProcessing(datas[index], datas[i]);
             break;
+            case m_synchronizator:
+               sync = isSync(datas[index], datas[i]);
+               if (!sync)
+               {
+                  master = isMaster(datas[index], datas[i]);
+                  if (!master)
+                  {
+                     Synchronization(datas[index], datas[i]);
+                  }
+               }
+            break;
             case m_deviator:
                sync = isSync(datas[index], datas[i]);
                if (!sync)  master = isMaster(datas[index], datas[i]);
@@ -173,6 +184,7 @@ protected:
       {
          case m_delayer: spread = spreadHis; break;
          case m_deviator: spread = spreadHis + spreadAlien; break;
+         case m_synchronizator: spread = spreadHis + spreadAlien; break;
       }
       if (spread < m_dHunterSetting.m_minRestrictionPoint) spread = m_dHunterSetting.m_minRestrictionPoint;
       
