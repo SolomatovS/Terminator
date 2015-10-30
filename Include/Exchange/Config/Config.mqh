@@ -336,6 +336,7 @@ private:
                   {
                      if (StringCompare(type, "Deviator", false) == 0) setting.m_type = m_deviator;
                      if (StringCompare(type, "Delayer", false) == 0) setting.m_type = m_delayer;
+                     if (StringCompare(type, "Synchronizator", false) == 0) setting.m_type = m_synchronizator;
                   }
                   
                   JSONObject* signal = dHunter.getObject("Signal");
