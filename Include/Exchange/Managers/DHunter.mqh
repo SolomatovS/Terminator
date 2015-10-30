@@ -39,10 +39,13 @@ protected:
             break;
             case m_synchronizator:
                sync = isSync(datas[index], datas[i]);
-               if (!sync)  master = isMaster(datas[index], datas[i]);
-               if (!master)
+               if (!sync)
                {
-                  Synchronization(datas[index], datas[i]);
+                  master = isMaster(datas[index], datas[i]);
+                  if (!master)
+                  {
+                     Synchronization(datas[index], datas[i]);
+                  }
                }
             break;
             case m_deviator:
