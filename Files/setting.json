@@ -4,10 +4,10 @@
     "Monitor": {
       "SymbolMemory": "Default",
       "SymbolTerminal": "Default",
-      "UTC": 1,
+      "UTC": 3,
       "Prefix": "Local",
       "Updater": true,
-      "Master": true,
+      "Master": false,
       "Managers": {
         "Amir": {
           "Enabler": false
@@ -15,8 +15,9 @@
         "DHunter": {
           "Enabler": true,
           "Logger": true,
+          "Type": "Delayer",
           "ExpertTimeOut": 1,
-          "MinRestrictionPoint": 0.00030,
+          "MinRestrictionPoint": 0.0000,
           "TradeSetting": {
             "Lots": 1,
             "Magic": 0,
@@ -28,14 +29,14 @@
           },
           "Signal": {
             "Open": {
-              "MinSpreads": 2,
-              "MinPoints": 0.0003,
-              "MinTimeBarrierInMilliSeconds": 500
+              "MinSpreads": 1,
+              "MinPoints": 0.0001,
+              "MinTimeBarrierInMilliSeconds": 0
             },
             "Close": {
               "MinSpreads": 1,
               "MinPoints": 0.0001,
-              "MinTimeBarrierInMilliSeconds": 500
+              "MinTimeBarrierInMilliSeconds": 0
             }
           }
         }
@@ -50,12 +51,12 @@
       "DHunter": {
         "Signal": {
           "Open": {
-            "MinSpreads": 2,
-            "MinPoints": 0.0003
+            "MinSpreads": 1,
+            "MinPoints": 0.00010
           },
           "Close": {
             "MinSpreads": 1,
-            "MinPoints": 0.0001
+            "MinPoints": 0.00015
           }
         }
       }
@@ -68,12 +69,12 @@
       "DHunter": {
         "Signal": {
           "Open": {
-            "MinSpreads": 2,
-            "MinPoints": 0.0004
+            "MinSpreads": 1,
+            "MinPoints": 0.00010
           },
           "Close": {
             "MinSpreads": 1,
-            "MinPoints": 0.0001
+            "MinPoints": 0.0002
           }
         }
       }
@@ -86,11 +87,11 @@
       "DHunter": {
         "Signal": {
           "Open": {
-            "MinSpreads": 2,
-            "MinPoints": 0.03
+            "MinSpreads": 1,
+            "MinPoints": 0.01
           },
           "Close": {
-            "MinSpreads": 2,
+            "MinSpreads": 1,
             "MinPoints": 0.02
           }
         }
@@ -104,12 +105,12 @@
       "DHunter": {
         "Signal": {
           "Open": {
-            "MinSpreads": 2,
-            "MinPoints": 1.50
+            "MinSpreads": 1,
+            "MinPoints": 0.30
           },
           "Close": {
             "MinSpreads": 1,
-            "MinPoints": 1.0
+            "MinPoints": 0.50
           }
         }
       }
@@ -122,12 +123,12 @@
       "DHunter": {
         "Signal": {
           "Open": {
-            "MinSpreads": 2,
-            "MinPoints": 0.0003
+            "MinSpreads": 1,
+            "MinPoints": 0.0001
           },
           "Close": {
             "MinSpreads": 1,
-            "MinPoints": 0.0001
+            "MinPoints": 0.0002
           }
         }
       }
@@ -140,12 +141,120 @@
       "DHunter": {
         "Signal": {
           "Open": {
-            "MinSpreads": 2,
-            "MinPoints": 0.0009
+            "MinSpreads": 1,
+            "MinPoints": 0.0001
           },
           "Close": {
             "MinSpreads": 1,
-            "MinPoints": 0.0005
+            "MinPoints": 0.0002
+          }
+        }
+      }
+    }
+  },
+  {
+    "SymbolTerminal": "NZDUSD",
+    "SymbolMemory":   "NZDUSD",
+    "Managers": {
+      "DHunter": {
+        "Signal": {
+          "Open": {
+            "MinSpreads": 1,
+            "MinPoints": 0.0001
+          },
+          "Close": {
+            "MinSpreads": 1,
+            "MinPoints": 0.0002
+          }
+        }
+      }
+    }
+  },
+  {
+    "SymbolTerminal": "NZDJPY",
+    "SymbolMemory":   "NZDJPY",
+    "Managers": {
+      "DHunter": {
+        "Signal": {
+          "Open": {
+            "MinSpreads": 1,
+            "MinPoints": 0.0001
+          },
+          "Close": {
+            "MinSpreads": 1,
+            "MinPoints": 0.0002
+          }
+        }
+      }
+    }
+  },
+  {
+    "SymbolTerminal": "EURNZD",
+    "SymbolMemory":   "EURNZD",
+    "Managers": {
+      "DHunter": {
+        "Signal": {
+          "Open": {
+            "MinSpreads": 1,
+            "MinPoints": 0.0001
+          },
+          "Close": {
+            "MinSpreads": 1,
+            "MinPoints": 0.00020
+          }
+        }
+      }
+    }
+  },
+  {
+    "SymbolTerminal": "EURJPY",
+    "SymbolMemory":   "EURJPY",
+    "Managers": {
+      "DHunter": {
+        "Signal": {
+          "Open": {
+            "MinSpreads": 1,
+            "MinPoints": 0.00030
+          },
+          "Close": {
+            "MinSpreads": 1,
+            "MinPoints": 0.00020
+          }
+        }
+      }
+    }
+  },
+  {
+    "SymbolTerminal": "XAGUSD",
+    "SymbolMemory":   "XAGUSD",
+    "Managers": {
+      "DHunter": {
+        "Signal": {
+          "Open": {
+            "MinSpreads": 1,
+            "MinPoints": 0.02
+          },
+          "Close": {
+            "MinSpreads": 1,
+            "MinPoints": 0.01
+          }
+        }
+      }
+    }
+  },
+  {
+    "SymbolTerminal": "USDCNH",
+    "SymbolMemory":   "USDCNH",
+    "Managers": {
+      "DHunter": {
+        "Signal": {
+          "Open": {
+            "MinSpreads": 1,
+            "MinPoints": 0.0010
+          },
+          "Close": {
+            "MinSpreads": 1,
+            "MinPoints": 0.0010
           }
         }
       }

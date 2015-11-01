@@ -38,7 +38,7 @@ void OnTick()
 {
    InitExpert(Config);
    while(!IsStopped())
-   {
+  {
       ulong count = GetMicrosecondCount();
       
       RefreshRates();

@@ -334,8 +334,9 @@ private:
                   }
                   else
                   {
-                     if (StringCompare(type, "Master", false) == 0) setting.m_type = m_master;
-                     if (StringCompare(type, "Slave", false) == 0) setting.m_type = m_slave;
+                     if (StringCompare(type, "Deviator", false) == 0) setting.m_type = m_deviator;
+                     if (StringCompare(type, "Delayer", false) == 0) setting.m_type = m_delayer;
+                     if (StringCompare(type, "Synchronizator", false) == 0) setting.m_type = m_synchronizator;
                   }
                   
                   JSONObject* signal = dHunter.getObject("Signal");
@@ -359,6 +360,11 @@ private:
                         {
                            Print(__FUNCTION__, ": not parse 'Defaults:Monitor:Managers:DHunter:Signal:Open:MinTimeBarrierInMilliSeconds'. stop parsing.");
                         }
+                        result = open.getDouble("MaxTimeBarrierInMilliSeconds", setting.m_signalOpen.m_maxTimeBarrierInMilliSeconds);
+                        if (!result)
+                        {
+                           Print(__FUNCTION__, ": not parse 'Defaults:Monitor:Managers:DHunter:Signal:Open:MaxTimeBarrierInMilliSeconds'. stop parsing.");
+                        }
                      }
                      if (CheckPointer(open) == POINTER_DYNAMIC)   delete open;
                      
@@ -379,6 +385,11 @@ private:
                         if (!result)
                         {
                            Print(__FUNCTION__, ": not parse 'Defaults:Monitor:Managers:DHunter:Signal:Close:MinTimeBarrierInMilliSeconds'. stop parsing.");
+                        }
+                        result = close.getDouble("MaxTimeBarrierInMilliSeconds", setting.m_signalClose.m_minTimeBarrierInMilliSeconds);
+                        if (!result)
+                        {
+                           Print(__FUNCTION__, ": not parse 'Defaults:Monitor:Managers:DHunter:Signal:Close:MaxTimeBarrierInMilliSeconds'. stop parsing.");
                         }
                      }
                      if (CheckPointer(close) == POINTER_DYNAMIC)   delete close;

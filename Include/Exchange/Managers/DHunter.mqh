@@ -30,13 +30,49 @@ protected:
       {
          if (i == index) continue;
          
-         if (datas[index].Master)
+         bool master = false; bool sync;
+         
+         switch (m_dHunterSetting.m_type)
          {
-            SignalProcessing(datas[index], datas[i]);
-         }
-         else
-         {
-            Synchronization(datas[index], datas[i]);
+            case m_delayer:
+               if (!datas[index].Master && datas[i].Master) SignalProcessing(datas[index], datas[i]);
+            break;
+            case m_synchronizator:
+               sync = isSync(datas[index], datas[i]);
+               if (!sync)
+               {
+                  master = isMaster(datas[index], datas[i]);
+                  if (!master)
+                  {
+                     Synchronization(datas[index], datas[i]);
+                  }
+               }
+            break;
+            case m_deviator:
+               sync = isSync(datas[index], datas[i]);
+               if (!sync)  master = isMaster(datas[index], datas[i]);
+               else
+               {
+                  bool openedOrder = OrderIsOpened(Symbol(), m_dHunterSetting.m_tradeSetting.m_magic);
+                  if (openedOrder)
+                  {
+                     master = true;
+                  }
+                  else
+                  {
+                     master = datas[index].Master;
+                  }
+               }
+               
+               if (master/*datas[index].Master*/)
+               {
+                  SignalProcessing(datas[index], datas[i]);
+               }
+               else
+               {
+                  Synchronization(datas[index], datas[i]);
+               }
+            break;
          }
       }
    }
@@ -51,11 +87,77 @@ protected:
       return (his.isTradeAllowed && alien.isTradeAllowed);
    }
    
-   bool SignalAllowed(ulong timeOutQuote, double minTimeBarrierInMilliSeconds)
+   bool SignalAllowed(ulong timeOutQuote, double minTimeBarrierInMilliSeconds, double maxTimeBarrierInMilliSeconds)
    {
-      return NormalizeDouble(timeOutQuote / 1000, 2) < NormalizeDouble(minTimeBarrierInMilliSeconds, 2);
+      return NormalizeDouble(timeOutQuote / 1000, 2) >= NormalizeDouble(minTimeBarrierInMilliSeconds, 2)  &&
+             (NormalizeDouble(timeOutQuote / 1000, 2) <= NormalizeDouble(maxTimeBarrierInMilliSeconds, 2) || NormalizeDouble(maxTimeBarrierInMilliSeconds, 2) != 0);
    }
+   
+   bool isMaster(SData& his, SData& alien)
+   {
+      return his.LastTimeTransaction > alien.LastTimeTransaction;
+   }
+   
+   void CalculateTick(SData& his, SData& alien, double& calculatedAsk, double& clculatedBid)
+   {
+      double spread = NormalizeDouble(his.MQLTick.ask - his.MQLTick.bid, 5);
+      //double spreadBefore = NormalizeDouble(his.MQLTickBefore.ask - his.MQLTickBefore.bid, 5);
+      //double spread = (spreadCurrent + spreadBefore) / 2;
+      calculatedAsk = (alien.MQLTick.ask + alien.MQLTick.bid) / 2 + spread / 2;
+      clculatedBid = calculatedAsk - spread;
+   }
+   
+   void SignalDelay(SData& his, SData& alien)
+   {
+      if (!m_dHunterSetting.m_enabler) return;
       
+      if (ExpertTimeOut(alien) || !TradeAllowed(his, alien))  return;
+      
+      double calculatedBid, calculatedAsk;
+      CalculateTick(his, alien, calculatedAsk, calculatedBid);
+      
+      double deviationBuy   = calculatedBid - his.MQLTick.ask;
+      double deviationSell  = his.MQLTick.bid - calculatedAsk;
+      
+      bool openBuy = (deviationBuy - m_dHunterSetting.m_signalOpen.m_minPoints) > 0;
+      bool openSell= (deviationSell- m_dHunterSetting.m_signalOpen.m_minPoints) > 0;
+      
+      int typeOrder = openBuy ? OP_BUY : openSell ? OP_SELL : -1;
+      
+      if (openBuy || openSell)
+      {
+         Print(__FUNCTION__, ": Сигнал: Открыть позицию. Расхождение Buy: ", DoubleToString(deviationBuy, 5), ", Расхождение Sell: ", DoubleToString(deviationSell, 5));
+         Print(__FUNCTION__, ": BID = ", his.MQLTick.bid, ", calculate BID alien = ", calculatedBid);
+         Print(__FUNCTION__, ": ASK = ", his.MQLTick.ask, ", calculate ASK alien = ", calculatedAsk);
+         ActionSignalOpenOrder(his, alien, typeOrder);
+      }
+      else
+      {
+         bool openedOrderBuy = OrderIsOpened(Symbol(), m_dHunterSetting.m_tradeSetting.m_magic, OP_BUY);
+         bool openedOrderSell= OrderIsOpened(Symbol(), m_dHunterSetting.m_tradeSetting.m_magic, OP_SELL);
+         if (openedOrderBuy || openedOrderSell)
+         {
+            Print(__FUNCTION__, ": Сигнал: Закрыть позицию. Расхождение Buy: ", DoubleToString(deviationBuy, 5), ", Расхождение Sell: ", DoubleToString(deviationSell, 5));
+            Print(__FUNCTION__, ": BID = ", his.MQLTick.bid, ", calculate BID alien = ", calculatedBid);
+            Print(__FUNCTION__, ": ASK = ", his.MQLTick.ask, ", calculate ASK alien = ", calculatedAsk);
+            ActionSignalCloseOrders(his, alien, openedOrderBuy ? OP_BUY : openedOrderSell ? OP_SELL : -1);
+         }
+      }
+   }
+   
+   void DeviationCalculate(DHUNTER& setting, SData& his, SData& alien, double& deviationBuy, double& deviationSell)
+   {
+      double calculatedBid = alien.MQLTick.bid, calculatedAsk = alien.MQLTick.ask;
+      switch (setting.m_type)
+      {
+         case m_delayer: CalculateTick(his, alien, calculatedAsk, calculatedBid);   break;
+         case m_deviator: calculatedBid = alien.MQLTick.bid; calculatedAsk = alien.MQLTick.ask; break;
+      }
+      
+      deviationBuy   = calculatedBid - his.MQLTick.ask;
+      deviationSell  = his.MQLTick.bid - calculatedAsk;
+   }
+   
    // Check quotes deviation (BID > ASK || ASK < BID)
    void SignalProcessing(SData& his, SData& alien)
    {
@@ -63,8 +165,9 @@ protected:
       
       if (ExpertTimeOut(alien) || !TradeAllowed(his, alien))  return;
       
-      double deviationBuy = alien.MQLTick.bid - his.MQLTick.ask;
-      double deviationSell = his.MQLTick.bid - alien.MQLTick.ask;
+      double deviationBuy = 0;
+      double deviationSell = 0;
+      DeviationCalculate(m_dHunterSetting, his, alien, deviationBuy, deviationSell);
       
       double spreadHisCurrent = his.MQLTick.ask - his.MQLTick.bid;
       double spreadHisBefore = his.MQLTickBefore.ask - his.MQLTickBefore.bid;
@@ -76,7 +179,14 @@ protected:
       double spreadAlienAvg = (spreadAlienCurrent + spreadAlienBefore) / 2;
       double spreadAlien = spreadAlienAvg > spreadAlienCurrent ? spreadAlienAvg : spreadAlienCurrent;
       
-      double spread = spreadHis + spreadAlien; if (spread < m_dHunterSetting.m_minRestrictionPoint) spread = m_dHunterSetting.m_minRestrictionPoint;
+      double spread = spreadHis + spreadAlien;
+      switch (m_dHunterSetting.m_type)
+      {
+         case m_delayer: spread = spreadHis; break;
+         case m_deviator: spread = spreadHis + spreadAlien; break;
+         case m_synchronizator: spread = spreadHis + spreadAlien; break;
+      }
+      if (spread < m_dHunterSetting.m_minRestrictionPoint) spread = m_dHunterSetting.m_minRestrictionPoint;
       
       double spreadBuy = deviationBuy / spread;
       double spreadSell = deviationSell / spread;
@@ -85,7 +195,7 @@ protected:
       
       ulong time = GetMicrosecondCount();
       
-      if (SignalClose(deviationBuy, deviationSell, spreadBuy, spreadSell, typeOrder) && SignalAllowed(his.TimeOutQuote, m_dHunterSetting.m_signalClose.m_minTimeBarrierInMilliSeconds))
+      if (SignalClose(deviationBuy, deviationSell, spreadBuy, spreadSell, typeOrder) && SignalAllowed(his.TimeOutQuote, m_dHunterSetting.m_signalClose.m_minTimeBarrierInMilliSeconds, m_dHunterSetting.m_signalClose.m_maxTimeBarrierInMilliSeconds) && OrderIsOpened(Symbol(), m_dHunterSetting.m_tradeSetting.m_magic))
       {
          Print(__FUNCTION__, ": Сигнал: Закрыть позицию. Расхождение Buy: ", DoubleToString(deviationBuy, 5), ", Расхождение Sell: ", DoubleToString(deviationSell, 5), ", Спред: ", DoubleToString(spread, 5));
          Print(__FUNCTION__, ": BID = ", his.MQLTick.bid, ", BID alien = ", alien.MQLTick.bid);
@@ -95,7 +205,7 @@ protected:
       
       ulong timeExecution = GetMicrosecondCount() - time; if ((timeExecution / 1000) > 300)   return;
       
-      if (SignalOpen(deviationBuy, deviationSell, spreadBuy, spreadSell, typeOrder) && SignalAllowed(his.TimeOutQuote, m_dHunterSetting.m_signalOpen.m_minTimeBarrierInMilliSeconds))
+      if (SignalOpen(deviationBuy, deviationSell, spreadBuy, spreadSell, typeOrder) && SignalAllowed(his.TimeOutQuote, m_dHunterSetting.m_signalOpen.m_minTimeBarrierInMilliSeconds, m_dHunterSetting.m_signalOpen.m_maxTimeBarrierInMilliSeconds))
       {
          Print(__FUNCTION__, ": Сигнал: Открыть позицию. Расхождение Buy: ", DoubleToString(deviationBuy, 5), ", Расхождение Sell: ", DoubleToString(deviationSell, 5), ", Спред: ", DoubleToString(spread, 5));
          Print(__FUNCTION__, ": BID = ", his.MQLTick.bid, ", BID alien = ", alien.MQLTick.bid);
@@ -116,11 +226,53 @@ protected:
    {
       bool closeSell = (spreadBuy > m_dHunterSetting.m_signalClose.m_minSpreads) && (deviationBuy - m_dHunterSetting.m_signalClose.m_minPoints)  > 0;
       bool closeBuy =(spreadSell > m_dHunterSetting.m_signalClose.m_minSpreads)&& (deviationSell - m_dHunterSetting.m_signalClose.m_minPoints) > 0;
-   
+      
       typeOrder = closeBuy ? OP_BUY : closeSell ? OP_SELL : -1;
       
       return (closeBuy || closeSell);
    }
+   
+   bool isSync(SData& his, SData& alien)
+   {
+      for(int i = 0; i < ArraySize(alien.Orders); i++)
+      {
+         if (alien.Orders[i].m_ticket <= 0)  continue;
+         if (alien.Orders[i].m_magic != m_dHunterSetting.m_tradeSetting.m_magic)   continue;
+         //if (CharArrayToString(alien.Orders[i].m_symbol) != Symbol()) continue;
+         
+         bool isSync = false;
+         for (int j = 0; j < ArraySize(his.Orders); j++)
+         {
+            if (his.Orders[j].m_ticket <= 0)  continue;
+            if (his.Orders[j].m_magic != m_dHunterSetting.m_tradeSetting.m_magic)   continue;
+            //if (CharArrayToString(his.Orders[j].m_symbol) != Symbol()) continue;
+            
+            isSync = his.Orders[j].m_cmd == Reverse(alien.Orders[i].m_cmd); if (isSync)   break;
+         }
+         if (!isSync)   return false;
+      }
+      
+      for(int i = 0; i < ArraySize(his.Orders); i++)
+      {
+         if (his.Orders[i].m_ticket <= 0)  continue;
+         if (his.Orders[i].m_magic != m_dHunterSetting.m_tradeSetting.m_magic)   continue;
+         //if (CharArrayToString(his.Orders[i].m_symbol) != Symbol()) continue;
+         
+         bool isSync = false;
+         for (int j = 0; j < ArraySize(alien.Orders); j++)
+         {
+            if (alien.Orders[j].m_ticket <= 0)  continue;
+            if (alien.Orders[j].m_magic != m_dHunterSetting.m_tradeSetting.m_magic)   continue;
+            //if (CharArrayToString(alien.Orders[j].m_symbol) != Symbol()) continue;
+            
+            isSync = alien.Orders[j].m_cmd == Reverse(his.Orders[i].m_cmd); if (isSync)   break;
+         }
+         if (!isSync)   return false;
+      }
+      
+      return true;
+   }
+   
    void Synchronization(SData& his, SData& alien)
    {
       if (ExpertTimeOut(alien) || !TradeAllowed(his, alien))  return;
@@ -130,9 +282,9 @@ protected:
       {
          if (alien.Orders[i].m_ticket <= 0)  continue;
          if (alien.Orders[i].m_magic != m_dHunterSetting.m_tradeSetting.m_magic)   continue;
-         if (CharArrayToString(alien.Orders[i].m_symbol) != Symbol()) continue;
+         //if (CharArrayToString(alien.Orders[i].m_symbol) != Symbol()) continue;
          
-         SynchronizationOpenOrder(alien.Orders[i]);
+         SynchronizationOpenOrder(his, alien.Orders[i]);
       }
       
       // Потом закрываем те ордера, которых нет в терминале master
@@ -143,11 +295,11 @@ protected:
          {
             if (!OrderUnic(Symbol(), m_dHunterSetting.m_tradeSetting.m_magic))   continue;
             
-            SynchronizationCloseOrder(OrderTicket(), alien);
+            SynchronizationCloseOrder(OrderTicket(), his, alien);
          }
       }
    }
-   void SynchronizationOpenOrder(MQLOrder& orderForSynchronization)
+   void SynchronizationOpenOrder(SData& his, MQLOrder& orderForSynchronization)
    {
       bool orderOpened = false;
       for (int i = 0; i < OrdersTotal(); i++)
@@ -162,8 +314,10 @@ protected:
       {
          Print(__FUNCTION__, ": Обнаружен не синхронизированный ордер, открываем его.");
          MQLRequestOpen request; request.Init(orderForSynchronization);
+         StringToCharArray(Symbol(), request.m_symbol);
          request.m_cmd = Reverse(orderForSynchronization.m_cmd);
-         request.m_price = 0;
+         FillRequestPrice(his.MQLTick, request.m_cmd, request.m_price);
+         //request.m_price = 0;
          request.m_stoploss = orderForSynchronization.m_takeprofit; request.m_takeprofit = orderForSynchronization.m_stoploss;
          
          MQLRequestOpen try[];
@@ -188,7 +342,7 @@ protected:
          }
       }
    }
-   void SynchronizationCloseOrder(int ticket, SData& alien)
+   void SynchronizationCloseOrder(int ticket, SData& his, SData& alien)
    {
       if (!OrderSelect(ticket, SELECT_BY_TICKET))   return;
       
@@ -199,7 +353,7 @@ protected:
          if (alien.Orders[i].m_ticket <= 0)  continue;
          if (alien.Orders[i].m_magic != m_dHunterSetting.m_tradeSetting.m_magic)   continue;
          if (alien.Orders[i].m_cmd != Reverse(OrderType())) continue;
-         if (CharArrayToString(alien.Orders[i].m_symbol) != OrderSymbol()) continue;
+         //if (CharArrayToString(alien.Orders[i].m_symbol) != OrderSymbol()) continue;
          
          orderOpened = true; break;
       }
@@ -208,7 +362,9 @@ protected:
       {
          MQLRequestClose request; request.Init();
          FillRequest(request, OrderTicket(), alien);
-         request.m_price = 0;
+         FillRequestPrice(his.MQLTick, Reverse(OrderType()), request.m_price);
+         
+         //request.m_price = 0;
          MQLRequestClose try[];
          bool result = m_trader.CloseOrDeleteOrder(
                                        request,
@@ -242,10 +398,33 @@ protected:
       }
       else ActionOpenOrder(his, alien, typeOrder); return;
    }
+   bool CheckRequestLongExecution(SData& his, int typeOrder)
+   {
+      MqlTick tick; SymbolInfoTick(CharArrayToString(his.TSymbol), tick);
+      if (typeOrder == OP_BUY)
+      {
+         if (tick.ask > his.MQLTick.ask)
+         {
+            Print(__FUNCTION__, ": Цена изменилась в худшую сторону. не открываем ордер. было: ", DoubleToString(his.MQLTick.ask, 5), ", стало: ", DoubleToString(tick.ask, 5));
+            return false;
+         }
+      }
+      if (typeOrder == OP_SELL)
+      {
+         if (tick.bid < his.MQLTick.bid)
+         {
+            Print(__FUNCTION__, ": Цена изменилась в худшую сторону. не открываем ордер. было: ", DoubleToString(his.MQLTick.bid, 5), ", стало: ", DoubleToString(tick.bid, 5));
+            return false;
+         }
+      }
+      return true;
+   }
    void ActionOpenOrder(SData& his, SData& alien, int typeOrder)
    {
       MQLRequestOpen request; request.Init();
-      request.m_cmd = typeOrder;
+      if (!CheckRequestLongExecution(his, typeOrder))  return;
+      
+      request.m_cmd = typeOrder; 
       FillRequest(request, his, alien);
       if (request.m_cmd == -1)
       {
@@ -284,6 +463,9 @@ protected:
             if (OrderCloseTime() > 0 || !OrderUnic(Symbol(), m_dHunterSetting.m_tradeSetting.m_magic, typeOrder))   continue;
             
             MQLRequestClose request; request.Init();
+            
+            if (!CheckRequestLongExecution(his, typeOrder))  return;
+            
             FillRequest(request, OrderTicket(), his);
             MQLRequestClose try[];
             
@@ -328,7 +510,7 @@ private:
       //request.m_cmd = SignalDetection(his, alien);
       ArrayCopy(request.m_symbol, his.TSymbol);
       FillRequestVolume(request.m_volume);
-      FillRequestPrice(request.m_tick, request.m_cmd, request.m_price);
+      FillRequestPrice(his.MQLTick, request.m_cmd, request.m_price);
       request.m_magic = m_dHunterSetting.m_tradeSetting.m_magic;
       request.m_slippage = 0;
    }
@@ -339,7 +521,7 @@ private:
       {
          request.m_ticket = ticket;
          request.m_lots = OrderLots();
-         FillRequestPrice(request.m_tick, OrderType(), request.m_price);
+         FillRequestPrice(his.MQLTick, OrderType(), request.m_price);
          request.m_slippage = 0;
       }
    }
@@ -371,7 +553,7 @@ private:
       return (StringCompare(OrderSymbol(), symbol) == 0 && OrderMagicNumber() == magic && (OrderType() == typeOrder || typeOrder == -1));
    }
    
-   bool OrderIsOpened(string symbol, int magic, int typeOrder)
+   bool OrderIsOpened(string symbol, int magic, int typeOrder = -1)
    {
       for(int i = 0; i < OrdersTotal(); i++)
       {
@@ -429,6 +611,8 @@ private:
       for(int i = 0; i < ArraySize(datas); i++)
       {
          if (i == index) continue;
+         if ((datas[index].Master == datas[i].Master) && m_dHunterSetting.m_type == m_delayer) continue;
+         
          m_log += Log(datas[index], datas[i]);
       }
       Comment(m_log);
@@ -437,7 +621,7 @@ private:
    {
       string company = CharArrayToString(alien.Terminal.Company);
       int login = alien.Terminal.Login;
-      int digits = SymbolInfoInteger(CharArrayToString(his.TSymbol), SYMBOL_DIGITS);
+      int digits = 5;
       
       double pointBuy  = alien.MQLTick.bid - his.MQLTick.ask;
       double pointSell = his.MQLTick.bid - alien.MQLTick.ask;
@@ -448,8 +632,28 @@ private:
       double spreadAverageAlien = ((alien.MQLTick.ask - alien.MQLTick.bid) + (alien.MQLTickBefore.ask - alien.MQLTickBefore.bid)) / 2;
       
       string orders = his.OrdersToString();
+      string ordersHistory = his.OrdersHistoryToString();
       
       double sum = OrdersSum(his, alien);
+      double sumHistory = OrdersHistorySum(his, alien);
+      
+      bool hisMaster = false, alienMaster = false;
+         
+      bool sync = isSync(his, alien);
+      if (!sync){ hisMaster = isMaster(his, alien); alienMaster = hisMaster ? false : true; }
+      else
+      {
+         bool openedOrder = OrderIsOpened(Symbol(), m_dHunterSetting.m_tradeSetting.m_magic);
+         if (openedOrder)
+         {
+            hisMaster = true; alienMaster = true;
+         }
+         else
+         {
+            hisMaster = his.Master; alienMaster = alien.Master;
+         }
+         
+      }
       
       string text = StringConcatenate(
          company, " : ", login, "\n",
@@ -463,18 +667,20 @@ private:
          "  ask before         ", DoubleToString(alien.MQLTickBefore.ask, digits), "    |    ", DoubleToString(his.MQLTickBefore.ask, digits), "\n",
          "  bid before          ", DoubleToString(alien.MQLTickBefore.bid, digits), "    |    ", DoubleToString(his.MQLTickBefore.bid, digits), "\n"
          "-------------------------------------------------------------------", "\n");
-       return text + StringConcatenate(
+         text += StringConcatenate(
          "  TimeOut           ", DoubleToString(alien.TimeOutQuote * 0.000001, 2), " sec.     |    ", DoubleToString(his.TimeOutQuote * 0.000001, 2), " sec.\n",
          "  LastUpdate        ", TimeToString(alien.LastUpdateExpert, TIME_MINUTES|TIME_SECONDS), "    |    ", TimeToString(his.LastUpdateExpert, TIME_MINUTES|TIME_SECONDS), "\n",
          "  Spread avg        ", DoubleToString(spreadAverageAlien, digits), "    |     ", DoubleToString(spreadAverage, digits), "    \n",
          "  TradeAllowed      ", alien.isTradeAllowed, "        |      ", his.isTradeAllowed, "          \n",
          "  Master                ", alien.Master, "       |      ", his.Master, "          \n",
+         "  LastTransaction   ", TimeToString(alien.LastTimeTransaction, TIME_MINUTES|TIME_SECONDS), "   |   ", TimeToString(his.LastTimeTransaction, TIME_MINUTES|TIME_SECONDS), "          \n",
+         "  CalcutateMaster   ", alienMaster, "        |    ", hisMaster, "        \n",
          "-------------------------------------------------------------------", "\n",
          "  Buy:                " , DoubleToString(NormalizeDouble(spreadGeneral, digits) > 0 ? pointBuy / spreadGeneral : 0,  2), " sp.    |   ", DoubleToString(pointBuy,  digits), " pt.", "\n",
          "  Sell:                 ", DoubleToString(NormalizeDouble(spreadGeneral, digits) > 0 ? pointSell / spreadGeneral : 0, 2), " sp.    |   ", DoubleToString(pointSell, digits), " pt.", "\n",
-         //"     Stop quotes: ", string(status), "\n",
-         "-------------------------------------------------------------------", "\n", orders, "\n", "-------------------------------------------------------------------", "\n",
-         "  Orders sum        ", DoubleToString(sum, digits), " pt.\n", "-------------------------------------------------------------------", "\n"
+         "\n");
+         return text + StringConcatenate("- Open Orders ---- ", DoubleToString(sum, 2), " ----------------------------------", "\n", orders, "\n", "-------------------------------------------------------------------", "\n",
+         "- History Orders -- ", DoubleToString(sumHistory, 2), " ------------------------------", "\n", ordersHistory, "\n", "-------------------------------------------------------------------", "\n"
       );
    }
    
@@ -487,11 +693,35 @@ private:
          if (orders[i].m_ticket <= 0)  continue;
          if (orders[i].m_magic == magic && magic != -1) continue;
          
-         switch(orders[i].m_cmd)
+         sum += (orders[i].m_profit + orders[i].m_swap + orders[i].m_commission);
+         
+         /*switch(orders[i].m_cmd)
          {
             case OP_BUY: sum += orders[i].m_closePrice - orders[i].m_price; break;
             case OP_SELL:sum += orders[i].m_price - orders[i].m_closePrice; break;
          }
+         */
+      }
+      
+      return sum;
+   }
+   
+   double OrdersHistorySum(SData &his, SData &alien, int magic = -1)
+   {
+      double sum = 0;
+      MQLOrder orders[]; ArrayCopy(orders, his.OrdersHistory); ArrayCopy(orders, alien.OrdersHistory, ArraySize(his.OrdersHistory));
+      for(int i = 0; i < ArraySize(orders); i++)
+      {
+         if (orders[i].m_ticket <= 0)  continue;
+         if (orders[i].m_magic == magic && magic != -1) continue;
+         
+         sum += (orders[i].m_profit + orders[i].m_swap + orders[i].m_commission);
+         /*switch(orders[i].m_cmd)
+         {
+            case OP_BUY: sum += orders[i].m_closePrice - orders[i].m_price; break;
+            case OP_SELL:sum += orders[i].m_price - orders[i].m_closePrice; break;
+         }
+         */
       }
       
       return sum;
