@@ -4,16 +4,16 @@
     "Monitor": {
       "SymbolMemory": "Default",
       "SymbolTerminal": "Default",
-      "UTC": 3,
+      "UTC": 2,
       "Prefix": "Local",
       "Updater": true,
       "Master": false,
       "Managers": {
         "Amir": {
-          "Enabler": false
+          "Enabler": true
         },
         "DHunter": {
-          "Enabler": true,
+          "Enabler": false,
           "Logger": true,
           "Type": "Delayer",
           "ExpertTimeOut": 1,
@@ -46,7 +46,7 @@
   "Monitors": [
   {
     "SymbolTerminal": "EURUSD",
-    "SymbolMemory":   "EURUSD",
+    "SymbolMemory":   "EURUSD1",
     "Managers": {
       "DHunter": {
         "Signal": {
