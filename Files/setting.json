@@ -64,7 +64,7 @@
   },
   {
     "SymbolTerminal": "GBPUSD",
-    "SymbolMemory":   "GBPUSD",
+    "SymbolMemory":   "GBPUSD1",
     "Managers": {
       "DHunter": {
         "Signal": {
@@ -82,7 +82,7 @@
   },
   {
     "SymbolTerminal": "USDJPY",
-    "SymbolMemory":   "USDJPY",
+    "SymbolMemory":   "USDJPY1",
     "Managers": {
       "DHunter": {
         "Signal": {
@@ -99,18 +99,18 @@
     }
   },
   {
-    "SymbolTerminal": "XAUUSD",
-    "SymbolMemory":   "XAUUSD",
+    "SymbolTerminal": "USDCHF",
+    "SymbolMemory":   "USDCHF1",
     "Managers": {
       "DHunter": {
         "Signal": {
           "Open": {
             "MinSpreads": 1,
-            "MinPoints": 0.30
+            "MinPoints": 0.0001
           },
           "Close": {
             "MinSpreads": 1,
-            "MinPoints": 0.50
+            "MinPoints": 0.0002
           }
         }
       }
@@ -118,7 +118,7 @@
   },
   {
     "SymbolTerminal": "AUDUSD",
-    "SymbolMemory":   "AUDUSD",
+    "SymbolMemory":   "AUDUSD1",
     "Managers": {
       "DHunter": {
         "Signal": {
@@ -154,7 +154,7 @@
   },
   {
     "SymbolTerminal": "NZDUSD",
-    "SymbolMemory":   "NZDUSD",
+    "SymbolMemory":   "NZDUSD1",
     "Managers": {
       "DHunter": {
         "Signal": {
