@@ -183,7 +183,7 @@ protected:
       double spreadBuy = deviationBuy / spread;
       double spreadSell = deviationSell / spread;
       
-      int typeOrderBuy = -1, typeOrderSell = -1;
+      bool typeOrderBuy = false, typeOrderSell = false;
       
       ulong time = GetMicrosecondCount();
       
@@ -194,20 +194,20 @@ protected:
             Print(__FUNCTION__, ": Сигнал: Закрыть позицию на Buy. Расхождение Buy: ", DoubleToString(deviationBuy, 5), ", Расхождение Sell: ", DoubleToString(deviationSell, 5), ", Спред: ", DoubleToString(spread, 5));
             Print(__FUNCTION__, ": BID = ", his.MQLTick.bid, ", BID alien = ", alien.MQLTick.bid);
             Print(__FUNCTION__, ": ASK = ", his.MQLTick.ask, ", ASK alien = ", alien.MQLTick.ask);
-            ActionSignalCloseOrders(his, alien, typeOrderBuy);
+            ActionSignalCloseOrders(his, alien, OP_BUY);
          }
          if (typeOrderSell)
          {
             Print(__FUNCTION__, ": Сигнал: Закрыть позицию на Sell. Расхождение Buy: ", DoubleToString(deviationBuy, 5), ", Расхождение Sell: ", DoubleToString(deviationSell, 5), ", Спред: ", DoubleToString(spread, 5));
             Print(__FUNCTION__, ": BID = ", his.MQLTick.bid, ", BID alien = ", alien.MQLTick.bid);
             Print(__FUNCTION__, ": ASK = ", his.MQLTick.ask, ", ASK alien = ", alien.MQLTick.ask);
-            ActionSignalCloseOrders(his, alien, typeOrderSell);
+            ActionSignalCloseOrders(his, alien, OP_SELL);
          }
       }
       
       ulong timeExecution = GetMicrosecondCount() - time; if ((timeExecution / 1000) > 300)   return;
       
-      typeOrderBuy = -1; typeOrderSell = -1;
+      typeOrderBuy = false; typeOrderSell = false;
       if (SignalOpen(deviationBuy, deviationSell, spreadBuy, spreadSell, typeOrderBuy, typeOrderSell) && SignalAllowed(his.TimeOutQuote, m_dHunterSetting.m_signalOpen.m_minTimeBarrierInMilliSeconds, m_dHunterSetting.m_signalOpen.m_maxTimeBarrierInMilliSeconds))
       {
          if (typeOrderBuy)
@@ -215,36 +215,30 @@ protected:
             Print(__FUNCTION__, ": Сигнал: Открыть позицию на Buy. Расхождение Buy: ", DoubleToString(deviationBuy, 5), ", Расхождение Sell: ", DoubleToString(deviationSell, 5), ", Спред: ", DoubleToString(spread, 5));
             Print(__FUNCTION__, ": BID = ", his.MQLTick.bid, ", BID alien = ", alien.MQLTick.bid);
             Print(__FUNCTION__, ": ASK = ", his.MQLTick.ask, ", ASK alien = ", alien.MQLTick.ask);
-            ActionSignalOpenOrder(his, alien, typeOrderBuy);
+            ActionSignalOpenOrder(his, alien, OP_BUY);
          }
          if (typeOrderSell)
          {
             Print(__FUNCTION__, ": Сигнал: Открыть позицию на Sell. Расхождение Buy: ", DoubleToString(deviationBuy, 5), ", Расхождение Sell: ", DoubleToString(deviationSell, 5), ", Спред: ", DoubleToString(spread, 5));
             Print(__FUNCTION__, ": BID = ", his.MQLTick.bid, ", BID alien = ", alien.MQLTick.bid);
             Print(__FUNCTION__, ": ASK = ", his.MQLTick.ask, ", ASK alien = ", alien.MQLTick.ask);
-            ActionSignalOpenOrder(his, alien, typeOrderSell);
+            ActionSignalOpenOrder(his, alien, OP_SELL);
          }
       }
    }
-   bool SignalOpen(double deviationBuy, double deviationSell, double spreadBuy, double spreadSell, int& typeOrderBuy, int& typeOrderSell)
+   bool SignalOpen(double deviationBuy, double deviationSell, double spreadBuy, double spreadSell, bool& buy, bool& sell)
    {
-      bool openBuy = (spreadBuy > m_dHunterSetting.m_signalOpen.m_minSpreads) && (deviationBuy - m_dHunterSetting.m_signalOpen.m_minPoints)  > 0;
-      bool openSell =(spreadSell > m_dHunterSetting.m_signalOpen.m_minSpreads)&& (deviationSell - m_dHunterSetting.m_signalOpen.m_minPoints) > 0;
+      buy  =(spreadBuy > m_dHunterSetting.m_signalOpen.m_minSpreads) && (deviationBuy - m_dHunterSetting.m_signalOpen.m_minPoints)  > 0;
+      sell =(spreadSell > m_dHunterSetting.m_signalOpen.m_minSpreads)&& (deviationSell - m_dHunterSetting.m_signalOpen.m_minPoints) > 0;
       
-      typeOrderBuy = openBuy ? OP_BUY : -1;
-      typeOrderSell = openSell ? OP_SELL : -1;
-      
-      return (openBuy || openSell);
+      return (buy || sell);
    }
-   bool SignalClose(double deviationBuy, double deviationSell, double spreadBuy, double spreadSell, int& typeOrderBuy, int& typeOrderSell)
+   bool SignalClose(double deviationBuy, double deviationSell, double spreadBuy, double spreadSell, bool& buy, bool& sell)
    {
-      bool closeSell = (spreadBuy > m_dHunterSetting.m_signalClose.m_minSpreads) && (deviationBuy - m_dHunterSetting.m_signalClose.m_minPoints)  > 0;
-      bool closeBuy =(spreadSell > m_dHunterSetting.m_signalClose.m_minSpreads)&& (deviationSell - m_dHunterSetting.m_signalClose.m_minPoints) > 0;
+      sell = (spreadBuy > m_dHunterSetting.m_signalClose.m_minSpreads) && (deviationBuy - m_dHunterSetting.m_signalClose.m_minPoints)  > 0;
+      buy  = (spreadSell > m_dHunterSetting.m_signalClose.m_minSpreads)&& (deviationSell - m_dHunterSetting.m_signalClose.m_minPoints) > 0;
       
-      typeOrderBuy = closeBuy ? OP_BUY : -1;
-      typeOrderSell = closeSell ? OP_SELL : -1;
-      
-      return (closeBuy || closeSell);
+      return (buy || sell);
    }
    
    bool isSync(SData& his, SData& alien)

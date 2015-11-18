@@ -4,7 +4,7 @@
     "Monitor": {
       "SymbolMemory": "Default",
       "SymbolTerminal": "Default",
-      "UTC": 3,
+      "UTC": 2,
       "Prefix": "Local",
       "Updater": true,
       "Master": false,
@@ -31,12 +31,16 @@
             "Open": {
               "MinSpreads": 1,
               "MinPoints": 0.0001,
-              "MinTimeBarrierInMilliSeconds": 0
+              "MinTimeBarrierInMilliSeconds": 0,
+              "MaxTimeBarrierInMilliSeconds": 0
             },
             "Close": {
               "MinSpreads": 1,
               "MinPoints": 0.0001,
-              "MinTimeBarrierInMilliSeconds": 0
+              "MinTimeBarrierInMilliSeconds": 0,
+              "MaxTimeBarrierInMilliSeconds": 0,
+              "StoplLoss": -0.0005,
+              "MinSeconds": 0
             }
           }
         }
@@ -51,12 +55,13 @@
       "DHunter": {
         "Signal": {
           "Open": {
-            "MinSpreads": 1,
-            "MinPoints": 0.00010
+            "MinSpreads": 2,
+            "MinPoints": 0.0002
           },
           "Close": {
-            "MinSpreads": 1,
-            "MinPoints": 0.00015
+            "MinSpreads": 2,
+            "MinPoints": -0.0005,
+            "StopLoss": -0.0005
           }
         }
       }
