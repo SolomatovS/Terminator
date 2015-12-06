@@ -19,10 +19,13 @@ int nMinutesStopTrade = 5; // количество минут, пока цена актуальна. Если выключ
 int nMinutesToClose = 5;   // количество минут, после которых советник может начать закрывать открытые ордера (служит маскировкой торговли на задержках)
 double dLots = 0.01;       // объем торговых операций
 int nTakeProfit = 10;      // потенциальный профит от открытия позиций на задержке
-int nCloseProfit = 10;     // потенциальный профит от закрытия позиций на задержке
-bool bOpenOrders = true;   // вкл/выкл возможность торговли (перед новостями/выходными)
+int nCloseProfit = 1;     // потенциальный профит от закрытия позиций на задержке
+bool bOpenOrders = false;   // вкл/выкл возможность торговли (перед новостями/выходными)
 bool bCloseOrders = true;  // вкл/выкл возможность закрытия ордеров (перед новостями/выходными)
+double dMaxBalance = 100;// максимальный баланс после которого запрещено торговать
+//double dMinBalance = 5;// минимальный баланс, ниже которого советник не торгует 
 int nMaxOrders = 3;        // максимальное количество ордеров в одном направлении (если депо небольшое/хотим ограничить сетку ордеров)
+int nPipsNewsStop = 50;    // если разница хай-лоу 50 пунктов у бара 0 или 1 (5 мин) - не торговать это рывки!
 bool bMadeLyingComment = true; // вкл/выкл создания псевдо комментария
 string sTextLyingComment = "Intraday Trend Scalper"; // позиционируем ТС как "Внутридневной Трендовый Скальпер"
 
@@ -56,7 +59,14 @@ protected:
       for(int i = 0; i < ArraySize(datas); i++) // перебираем терминалы, записанные в массив и сравниваем цены
       {
          if (i == index) continue;
-         if(!bInformationExpert) TradeStopQuotes(datas[index], datas[i], i); // в случае если true - советник не рассматривает бизнес-логику, а только отправляет котировки
+         if(!bInformationExpert)
+         {  // если день ПН и время не 00 час или ВТ или СР или ЧТ или ПТ и время не 23 час - работаем! 
+            if((DayOfWeek() == 1 && Hour() >= 1) || DayOfWeek() == 2 || DayOfWeek() == 3 || DayOfWeek() == 4 || (DayOfWeek() == 5 && Hour() < 23))
+            {   
+               TradeStopQuotes(datas[index], datas[i], i); // в случае если true - советник не рассматривает бизнес-логику, а только отправляет котировки
+            }
+            else sTextToComment += "Время открытия/закрытия рынка! Торговля запрещена!" + "\n";
+         }
          sTextToComment += GetText(datas[index], datas[i]);
       }
       Comment(sTextToComment);
@@ -74,25 +84,27 @@ protected:
          {
             if(ThereAreOrdersToClose(0, his.MQLTick.bid, Symbol()))
             {
-               Print("Секунды актуальных цен: , his.TimeOutQuote = ", DoubleToString(his.TimeOutQuote * 0.000001, 1), " sec. alien.TimeOutQuote = ", DoubleToString(alien.TimeOutQuote * 0.000001, 1), " sec.");
+               /*Print("Секунды актуальных цен: , his.TimeOutQuote = ", DoubleToString(his.TimeOutQuote * 0.000001, 1), " sec. alien.TimeOutQuote = ", DoubleToString(alien.TimeOutQuote * 0.000001, 1), " sec.");
                Print("Время когда была последняя задержка = ", TimeToString(tbTimeAlertDown[nNumberBroker]-60,TIME_DATE|TIME_SECONDS));
                Print("Расстояние тика nDelayDown = ", IntegerToString(nDelayDown));
                Print(TimeToString(TimeCurrent(),TIME_DATE|TIME_SECONDS), " - ", CharArrayToString(alien.Terminal.Company), ", зареджка вниз ", IntegerToString(nDelayDown),
                      " пунктов, ситуация CLOSE BUY[", DoubleToString(his.MQLTick.bid,5),"]-CLOSE SELL[", DoubleToString(alien.MQLTick.ask,5),"]");
-               Print("===  Закрытие позиции CLOSE BUY и хеджирующей CLOSE SELL ====");
+               Print("===  Закрытие позиции CLOSE BUY и хеджирующей CLOSE SELL ====");*/
             }
             else
             {
                if(nDelayDown >= nTakeProfit)
                {
-                  if(bOpenOrders && GetOpenOrders(1, Symbol()) < nMaxOrders) OpenMarketOrder(1, his.MQLTick.bid); // если у текущего брокера задержка, a у второго актуальные цены - открываем ордер
-                  Print("=============================================================");
-                  Print("Секунды актуальных цен: , his.TimeOutQuote = ", DoubleToString(his.TimeOutQuote * 0.000001, 1), " sec. alien.TimeOutQuote = ", DoubleToString(alien.TimeOutQuote * 0.000001, 1), " sec.");
-                  Print("Время когда была последняя задержка = ", TimeToString(tbTimeAlertDown[nNumberBroker]-60,TIME_DATE|TIME_SECONDS));
-                  Print("Расстояние тика nDelayDown = ", IntegerToString(nDelayDown));
-                  Print(TimeToString(TimeCurrent(),TIME_DATE|TIME_SECONDS), " - ", CharArrayToString(alien.Terminal.Company), ", зареджка вниз ", IntegerToString(nDelayDown),
-                        " пунктов, ситуация SELL[", DoubleToString(his.MQLTick.bid,5),"]-BUY[", DoubleToString(alien.MQLTick.ask,5),"]");
-                  Print("===  Открытие позиции SELL и хеджирование BUY ===============");
+                  if(bOpenOrders && GetOpenOrders(1, Symbol()) < nMaxOrders && ProverkaKotirovok(1, 1, his.MQLTick.bid)) 
+                  {
+                     OpenMarketOrder(1, his.MQLTick.bid); // если у текущего брокера задержка, a у второго актуальные цены - открываем ордер
+                     /*Print("Секунды актуальных цен: , his.TimeOutQuote = ", DoubleToString(his.TimeOutQuote * 0.000001, 1), " sec. alien.TimeOutQuote = ", DoubleToString(alien.TimeOutQuote * 0.000001, 1), " sec.");
+                     Print("Время когда была последняя задержка = ", TimeToString(tbTimeAlertDown[nNumberBroker]-60,TIME_DATE|TIME_SECONDS));
+                     Print("Расстояние тика nDelayDown = ", IntegerToString(nDelayDown));
+                     Print(TimeToString(TimeCurrent(),TIME_DATE|TIME_SECONDS), " - ", CharArrayToString(alien.Terminal.Company), ", зареджка вниз ", IntegerToString(nDelayDown),
+                           " пунктов, ситуация SELL[", DoubleToString(his.MQLTick.bid,5),"]-BUY[", DoubleToString(alien.MQLTick.ask,5),"]");
+                     Print("===  Открытие позиции SELL и хеджирование BUY ===============");*/
+                  }
                }
             }
             tbTimeAlertDown[nNumberBroker] = TimeLocal() + 60; // записываем время, чтобы срабатывать не чаще 1 раза в 1 минуту
@@ -103,25 +115,27 @@ protected:
          {
             if(ThereAreOrdersToClose(1, his.MQLTick.ask, Symbol()))
             {
-               Print("Секунды актуальных цен: , his.TimeOutQuote = ", DoubleToString(his.TimeOutQuote * 0.000001, 1), " sec. alien.TimeOutQuote = ", DoubleToString(alien.TimeOutQuote * 0.000001, 1), " sec.");
+               /*Print("Секунды актуальных цен: , his.TimeOutQuote = ", DoubleToString(his.TimeOutQuote * 0.000001, 1), " sec. alien.TimeOutQuote = ", DoubleToString(alien.TimeOutQuote * 0.000001, 1), " sec.");
                Print("Время когда была последняя задержка = ", TimeToString(tbTimeAlertUp[nNumberBroker]-60,TIME_DATE|TIME_SECONDS));
                Print("Расстояние тика nDelayUp = ", IntegerToString(nDelayUp));
                Print(TimeToString(TimeCurrent(),TIME_DATE|TIME_SECONDS), " - ", CharArrayToString(alien.Terminal.Company), ", зареджка вниз ", IntegerToString(nDelayDown),
                      " пунктов, ситуация CLOSE SELL[", DoubleToString(his.MQLTick.ask,5),"]-CLOSE BUY[", DoubleToString(alien.MQLTick.bid,5),"]");
-               Print("===  Закрытие позиции CLOSE SELL и хеджирующей CLOSE BUY ====");
+               Print("===  Закрытие позиции CLOSE SELL и хеджирующей CLOSE BUY ====");*/
             }
             else
             {
                if(nDelayUp >= nTakeProfit)
                {
-                  if(bOpenOrders && GetOpenOrders(0, Symbol()) < nMaxOrders) OpenMarketOrder(0, his.MQLTick.ask); // если у текущего брокера задержка, a у второго актуальные цены - открываем ордер
-                  Print("=============================================================");
-                  Print("Секунды актуальных цен: , his.TimeOutQuote = ", DoubleToString(his.TimeOutQuote * 0.000001, 1), " sec. alien.TimeOutQuote = ", DoubleToString(alien.TimeOutQuote * 0.000001, 1), " sec.");
-                  Print("Время когда была последняя задержка = ", TimeToString(tbTimeAlertUp[nNumberBroker]-60,TIME_DATE|TIME_SECONDS));
-                  Print("Расстояние тика nDelayUp = ", IntegerToString(nDelayUp));
-                  Print(TimeToString(TimeCurrent(),TIME_DATE|TIME_SECONDS), " - ", CharArrayToString(alien.Terminal.Company), ", зареджка вверх ", IntegerToString(nDelayUp),
-                        " пунктов, ситуация BUY[", DoubleToString(his.MQLTick.ask,5),"]-SELL[", DoubleToString(alien.MQLTick.bid,5),"]");
-                  Print("===  Открытие позиции BUY и хеджирование SELL ===============");
+                  if(bOpenOrders && GetOpenOrders(0, Symbol()) < nMaxOrders && ProverkaKotirovok(1, 0, his.MQLTick.ask)) 
+                  {
+                     OpenMarketOrder(0, his.MQLTick.ask); // если у текущего брокера задержка, a у второго актуальные цены - открываем ордер
+                     /*Print("Секунды актуальных цен: , his.TimeOutQuote = ", DoubleToString(his.TimeOutQuote * 0.000001, 1), " sec. alien.TimeOutQuote = ", DoubleToString(alien.TimeOutQuote * 0.000001, 1), " sec.");
+                     Print("Время когда была последняя задержка = ", TimeToString(tbTimeAlertUp[nNumberBroker]-60,TIME_DATE|TIME_SECONDS));
+                     Print("Расстояние тика nDelayUp = ", IntegerToString(nDelayUp));
+                     Print(TimeToString(TimeCurrent(),TIME_DATE|TIME_SECONDS), " - ", CharArrayToString(alien.Terminal.Company), ", зареджка вверх ", IntegerToString(nDelayUp),
+                           " пунктов, ситуация BUY[", DoubleToString(his.MQLTick.ask,5),"]-SELL[", DoubleToString(alien.MQLTick.bid,5),"]");
+                     Print("===  Открытие позиции BUY и хеджирование SELL ===============");*/
+                  }
                }
             }
             tbTimeAlertUp[nNumberBroker] = TimeLocal() + 60; // записываем время, чтобы срабатывать не чаще 1 раза в 1 минуту
@@ -172,19 +186,93 @@ bool ThereAreOrdersToClose(int nTypeClose, double dPriceClose, string sSymbolFin
       if(bCloseOrders && OrderType() == nTypeClose && OrderSymbol() == sSymbolFind) // если тип ордера и символ нужный для закрытия...
       {  // ... разрешено закрывать ордера и прошло уже больше N минут с момента открытия
          bReturn = true;
-         Print("=============================================================");
          if((TimeCurrent()-OrderOpenTime())/60 >= nMinutesToClose) 
          {  // итог работы функции будет "успех", т.к. есть ордера на закрытие чтобы советник не открывал локированные позиции
-            if(!OrderClose(OrderTicket(), OrderLots(), NormalizeDouble(dPriceClose,Digits), 0, Green))
-            {  
-               Print("Ошибка закрытия ордера ", OrderTicket(), ", ошибка: " + ErrorInformation(GetLastError()));
-               break;
+            if(ProverkaKotirovok(0, nTypeClose, dPriceClose)) 
+            {
+               if(!OrderClose(OrderTicket(), OrderLots(), NormalizeDouble(dPriceClose,Digits), 0, Green))
+               {  
+                  Print("Ошибка закрытия ордера ", OrderTicket(), ", ошибка: " + ErrorInformation(GetLastError()));
+                  break;
+               }
             }
          }
-         else Print("При закрытии ордера ", OrderTicket(), ", прошло только ", (TimeCurrent()-OrderOpenTime())/60, " минут!");
+         else Print("При закрытии ордера ", OrderTicket(), ", прошло только ", (TimeCurrent()-OrderOpenTime()), " минут!");
       }
    }
    // в случае если будет несколько ордеров на закрытие и если хоть один будет успешно закрыт - функция вернет "успех"
+   return(bReturn);
+}
+//+------------------------------------------------------------------+
+//| Функция условий перед открытием/закрытием                        |
+//+------------------------------------------------------------------+
+bool ProverkaKotirovok(int nOrder, int nType, double dPriceOrder)
+{
+   bool bReturn = true; // переменная с итогом работы данной функции
+   //RefreshRates();
+   //Print("=============================================================");
+   if(nOrder == 1) // это открытие ордера
+   {
+      /*if(nType == 0) 
+      {
+         if(dPriceOrder == Ask)
+         {
+            bReturn = true; 
+            Print("Цена правильная! Открытие BUY = ", dPriceOrder, ", Ask = ", Ask);
+         }
+         else Print("Изменилась цена! Открытие BUY = ", dPriceOrder, ", Ask = ", Ask);
+      }
+      if(nType == 1)
+      {
+         if(dPriceOrder == Bid)
+         {
+            bReturn = true; 
+            Print("Цена правильная! Открытие SELL = ", dPriceOrder, ", Bid = ", Bid);
+         }
+         else Print("Изменилась цена! Открытие SELL = ", dPriceOrder, ", Bid = ", Bid);
+      }*/
+      // проверка перелива средств в данного брокера, ограничение максимального баланса
+      if(/*AccountBalance() <= dMinBalance || */AccountBalance() >= dMaxBalance)
+      {
+         Print("Достигнут баланс: ", DoubleToStr(AccountBalance(),2), ", из возможных [", /*DoubleToStr(dMinBalance,2), "/",*/ DoubleToStr(dMaxBalance,2), "]");
+         return(false);
+      }
+      // закодить проверку наличия средств на счете перед открытием сделки 
+      if(AccountFreeMarginCheck(Symbol(),nType,dLots)<=0 || GetLastError()==134) 
+      {
+         Print("Не достаточно средств для залога под сделку! Баланс = ", AccountBalance());
+         return(false);
+      }
+   }
+   /*if(nOrder == 0) // это закрытие ордера
+   {
+      if(nType == 0)       
+      {
+         if(dPriceOrder == Bid)
+         {
+            bReturn = true;
+            Print("Цена правильная! Закрытие BUY = ", dPriceOrder, ", Bid = ", Bid);
+         }
+         else Print("Изменилась цена! Закрытие BUY = ", dPriceOrder, ", Bid = ", Bid);
+      }
+      if(nType == 1) 
+      {
+         if(dPriceOrder == Ask)
+         {
+            bReturn = true;
+            Print("Цена правильная! Закрытие SELL = ", dPriceOrder, ", Ask = ", Ask);
+         }
+         else Print("Изменилась цена! Закрытие SELL = ", dPriceOrder, ", Ask = ", Ask);
+      }
+   }*/
+
+   // отмена торговли если в барах был резкий скачок
+   if(MathRound((iHigh(Symbol(), 5, 0) - iLow(Symbol(), 5, 0))/Point) >= nPipsNewsStop || MathRound((iHigh(Symbol(), 5, 1) - iLow(Symbol(), 5, 1))/Point) >= nPipsNewsStop)
+   {
+      Print("В последних двух барах \"рывки\" цен больше либо равны ", nPipsNewsStop, " пунктов!");
+      return(false);
+   }
+   
    return(bReturn);
 }
 //+------------------------------------------------------------------+
@@ -212,7 +300,12 @@ void OpenMarketOrder(int nType, double dPriceOrder)
         default: Print("Не верный тип рыночного ордера!");
      }
      
-     if( (nType == 0 && dPriceOpen != Ask) || (nType == 1 && dPriceOpen != Bid) ) {Print("Цены изменились при попытке открыть ордер! "); break;} // цены изменились 
+     RefreshRates();
+     if( (nType == 0 && dPriceOpen != Ask) || (nType == 1 && dPriceOpen != Bid) ) 
+     {   // цены изменились 
+         Print("Цены изменились при попытке открыть ордер! "); 
+         break;
+     } 
      int nTicket = OrderSend(Symbol(), nType, dLots, dPriceOpen, 0, 0, 0, CreateCommentForOrder(), 0, 0, cColorOpen);
      if(nTicket != -1) break; //если открытие произошло успешно, наносим графический объект и выходим из цикла
      else
