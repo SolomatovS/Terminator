@@ -166,15 +166,15 @@ public:
    {
       if (m_setting.m_minPointDeviation.m_enabler)
       {
-         Add(filters, new MinPointsDeviation(m_setting.m_minPointDeviation));
+         Add(filters, (Filter*) new MinPointsDeviation(m_setting.m_minPointDeviation));
       }
       if (m_setting.m_minSpreadDeviation.m_enabler)
       {
-         Add(filters, new MinSpreadsDeviation(m_setting.m_minSpreadDeviation));
+         Add(filters, (Filter*) new MinSpreadsDeviation(m_setting.m_minSpreadDeviation));
       }
       if (m_setting.m_minGeneralFilter.m_enabler)
       {
-         Add(filters, new MinGeneralSpreadsDeviation(m_setting.m_minGeneralFilter));
+         Add(filters, (Filter*) new MinGeneralSpreadsDeviation(m_setting.m_minGeneralFilter));
       }
    }
 };

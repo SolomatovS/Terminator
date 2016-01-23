@@ -314,6 +314,12 @@ protected:
       {
          Print(__FUNCTION__, ": Обнаружен не синхронизированный ордер, открываем его.");
          MQLRequestOpen request; request.Init(orderForSynchronization);
+         
+         // отталкиваемся от номинального объема для расчета лотов
+         double nominal = SymbolInfoDouble(Symbol(), SYMBOL_TRADE_CONTRACT_SIZE);
+         request.m_volume = NormalizeDouble(nominal / orderForSynchronization.m_nominal_value * orderForSynchronization.m_volume, 2);
+         request.m_nominal_value = nominal;
+         
          StringToCharArray(Symbol(), request.m_symbol);
          request.m_cmd = Reverse(orderForSynchronization.m_cmd);
          FillRequestPrice(his.MQLTick, request.m_cmd, request.m_price);
