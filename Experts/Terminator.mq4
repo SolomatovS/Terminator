@@ -8,9 +8,9 @@
 #property version   "1.00"
 #property strict
 
-#include <Exchange\Config\Config.mqh>
-#include <Exchange\Model.mqh>
-#include <Exchange\Expert.mqh>
+#include "C:\BitBucket\terminator\Include\Exchange\Config\Config.mqh"
+#include "C:\BitBucket\terminator\Include\Exchange\Model.mqh"
+#include "C:\BitBucket\terminator\Include\Exchange\Expert.mqh"
 
 
 input string         FileConfig = "setting.json"; // Config file expert
