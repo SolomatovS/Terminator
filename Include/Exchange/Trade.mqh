@@ -8,7 +8,7 @@
 #property strict
 
 #include <stdlib.mqh>
-#include <Exchange\Model.mqh>
+#include "Model.mqh"
 
 class Trade
 {
