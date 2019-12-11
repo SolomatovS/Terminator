@@ -800,7 +800,6 @@ class JSONParser {
                 long l=0;
                 long sign;
                 // number
-                int i = _pos;
 
                 if (_in[_pos] == '-') {
                     sign = -1;
@@ -811,7 +810,7 @@ class JSONParser {
                 } else {
                     sign = 1;
                 }
-
+                int i = _pos;
                 while(i < _len && isDigit(_in[i])) {
                     l = l * 10 + ( _in[i] - '0' );
                     i++;
